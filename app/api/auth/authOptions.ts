@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { PrismaAdapter } from "@next-auth/prisma-adapter"
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcrypt";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -9,6 +9,7 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
+      id: "google",
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       profile(profile) {
@@ -17,7 +18,7 @@ export const authOptions: NextAuthOptions = {
           name: profile.name,
           email: profile.email,
           image: profile.picture,
-          role: "student", // Google auth users are always students
+          role: "student",
         };
       },
     }),
@@ -40,7 +41,10 @@ export const authOptions: NextAuthOptions = {
 
         if (!admin || !admin.password) return null;
 
-        const passwordMatch = await bcrypt.compare(credentials.password, admin.password);
+        const passwordMatch = await bcrypt.compare(
+          credentials.password,
+          admin.password
+        );
 
         if (!passwordMatch) return null;
 

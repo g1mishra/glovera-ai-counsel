@@ -6,7 +6,6 @@ export async function POST(request: Request) {
   try {
     const { email, password, name } = await request.json();
 
-    // Check if admin already exists
     const existingAdmin = await prisma.user.findFirst({
       where: { role: "admin" },
     });
@@ -36,4 +35,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}
