@@ -37,17 +37,13 @@ export async function POST(request: Request) {
       where: { userId: session.user.id },
     });
 
-    console.log(validatedData);
-
     let profile;
     if (existingProfile) {
-      console.log("Updating profile");
       profile = await prisma.profile.update({
         where: { userId: session.user.id },
         data: validatedData,
       });
     } else {
-      console.log("Creating profile");
       profile = await prisma.profile.create({
         data: {
           ...validatedData,

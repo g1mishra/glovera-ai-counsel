@@ -26,6 +26,7 @@ function validateAndTransformData(data: any) {
   english_requirements = Object.keys(english_requirements).reduce(
     (acc, key) => {
       if (english_requirements[key]) {
+        // @ts-ignore
         acc[key] = String(english_requirements[key]);
       }
       return acc;
