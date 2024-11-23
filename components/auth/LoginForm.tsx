@@ -1,17 +1,19 @@
 "use client";
 
-import React from "react";
-import { signIn } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
 import GoogleIcon from "../icons/google";
 
 export default function LoginForm() {
   const searchParams = useSearchParams();
+  const session = useSession();
   const callbackUrl = searchParams.get("callbackUrl") || "/profile";
   const error = searchParams.get("error");
 
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
+    if (session) {
+      await signOut({ redirect: false });
+    }
     signIn("google", { callbackUrl });
   };
 

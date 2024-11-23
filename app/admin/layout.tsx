@@ -3,21 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/authOptions";
 import { redirect } from "next/navigation";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
 
-  console.log(JSON.stringify(session, null, 2));
-
-  if (!session) {
-    return redirect("/auth/login");
-  }
-
-  if (session?.user?.role !== "admin") {
-    return <AdminAuthModal open={true} />;
+  if (!session || session?.user?.role !== "admin") {
+    return <AdminAuthModal />;
   }
 
   return <>{children}</>;

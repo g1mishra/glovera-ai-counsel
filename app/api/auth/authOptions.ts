@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Role } from "@/types/next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import bcrypt from "bcrypt";
 import { NextAuthOptions } from "next-auth";
@@ -30,7 +31,9 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
 
         const admin = await prisma.user.findFirst({
           where: {
@@ -39,24 +42,32 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        if (!admin || !admin.password) return null;
+        if (!admin || !admin.password) {
+          return null;
+        }
 
         const passwordMatch = await bcrypt.compare(
           credentials.password,
           admin.password
         );
 
-        if (!passwordMatch) return null;
+        if (!passwordMatch) {
+          return null;
+        }
 
         return {
           id: admin.id,
           email: admin.email,
           name: admin.name,
           role: "admin",
+          image: admin.image || null,
         };
       },
     }),
   ],
+  session: {
+    strategy: "jwt",
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -64,20 +75,16 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    async session({ session, user }) {
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: user.id,
-          role: user.role,
-        },
-      };
+    async session({ session, token }) {
+      if (session?.user) {
+        session.user.role = token.role as Role;
+      }
+      return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  debug: true,
   pages: {
-    signIn: "/auth/signin",
+    signIn: "/auth/login",
     error: "/auth/error",
   },
 };
