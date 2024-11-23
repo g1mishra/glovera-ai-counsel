@@ -4,7 +4,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 interface Props {
-  params: { programId: string };
+  params: Promise<{ programId: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -46,7 +46,8 @@ async function fetchProgramDetails(programId: string) {
   }
 }
 
-export default async function ProgramDetailPage({ params }: Props) {
+export default async function ProgramDetailPage(props: Props) {
+  const params = await props.params;
   const program = await fetchProgramDetails(params?.programId);
 
   console.log(program);

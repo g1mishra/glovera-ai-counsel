@@ -9,8 +9,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 
+  if (token.role === "admin") {
+    return NextResponse.next();
+  }
+
   if (!isProfileComplete(token.profile)) {
     const isAuthRoute = request.nextUrl.pathname.startsWith("/auth");
+
     if (!isAuthRoute && request.nextUrl.pathname !== "/onboard") {
       return NextResponse.redirect(new URL("/onboard", request.url));
     }

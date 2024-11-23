@@ -42,11 +42,8 @@ async function getPrograms(page: number = 1, limit: number = 10) {
   }
 }
 
-export default async function Programs({
-  searchParams,
-}: {
-  searchParams: { page?: string };
-}) {
+export default async function Programs(props: { searchParams: Promise<{ page?: string }> }) {
+  const searchParams = await props.searchParams;
   const currentPage = parseInt(searchParams.page || "1", 10);
   const { programs, pagination } = await getPrograms(currentPage);
 
