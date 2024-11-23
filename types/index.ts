@@ -27,11 +27,12 @@ export interface University {
 }
 
 export interface User {
-  _id?: string;
-  name: string;
-  email: string;
-  role: "student" | "admin";
-  profile?: StudentProfile;
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  role?: "student" | "admin";
+  profile?: UserProfile;
 }
 
 export interface StudentProfile {
@@ -158,4 +159,21 @@ export interface AdminDashboardStats {
     program: Program;
     applications: number;
   }>;
+}
+
+export interface UserProfile {
+  id: string;
+  userId: string;
+  undergraduate_degree?: string | null;
+  university?: string | null;
+  gpa?: string | null;
+  language_proficiency?: {
+    test_type: string;
+    overall_score: string;
+  } | null;
+  work_experience_years?: string | null;
+  technical_skills: string[];
+  preferred_study_countries: string[];
+  target_intake?: string | null;
+  budget_range?: string | null;
 }

@@ -7,7 +7,7 @@ import GoogleIcon from "../icons/google";
 export default function LoginForm() {
   const searchParams = useSearchParams();
   const session = useSession();
-  const callbackUrl = searchParams.get("callbackUrl") || "/profile";
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
   const error = searchParams.get("error");
 
   const handleGoogleSignIn = async () => {

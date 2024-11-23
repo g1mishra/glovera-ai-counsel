@@ -1,7 +1,6 @@
 import AdminAuthModal from "@/components/AdminAuthModal";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/authOptions";
-import { redirect } from "next/navigation";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
