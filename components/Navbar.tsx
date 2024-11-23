@@ -16,10 +16,6 @@ const navItems: NavItem[] = [
     href: "/programs",
   },
   {
-    label: "Universities",
-    href: "/universities",
-  },
-  {
     label: "Contact",
     href: "/contact",
   },

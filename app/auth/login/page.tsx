@@ -1,13 +1,25 @@
-import { Metadata } from "next";
-import { LogIn } from "lucide-react";
+import { authOptions } from "@/app/api/auth/authOptions";
 import LoginForm from "@/components/auth/LoginForm";
+import { LogIn } from "lucide-react";
+import { Metadata } from "next";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Login | Glovera",
   description: "Access your Glovera account using your Google credentials",
 };
 
-export default function Login() {
+export default async function Login() {
+  const session = await getServerSession(authOptions);
+  if (session && session?.user?.role === "admin") {
+    redirect("/admin");
+  }
+
+  if (session && session?.user?.role === "student") {
+    redirect("/profile");
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <main>
@@ -23,8 +35,8 @@ export default function Login() {
                 Welcome to Glovera
               </h1>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Sign in with your Google account to access your personalized
-                dashboard, track applications, and get program recommendations
+                Sign in with your Google account to access your personalized dashboard, track
+                applications, and get program recommendations
               </p>
             </div>
           </div>
