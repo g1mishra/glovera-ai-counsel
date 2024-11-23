@@ -1,7 +1,6 @@
-import React from "react";
-import { Metadata } from "next";
 import ProgramsMain from "@/components/programs/ProgramsMain";
 import { getBasePath } from "@/utils/getBasePath";
+import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Programs Explorer | Glovera",

@@ -8,12 +8,10 @@ async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
 
   return (
-    <html lang="en">
-      <body>
-        <ConditionalNavbar user={(session?.user as User) || null} />
-        <main>{children}</main>
-      </body>
-    </html>
+    <>
+      <ConditionalNavbar user={(session?.user as User) || null} />
+      <main>{children}</main>
+    </>
   );
 }
 
