@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AlertCircle, ArrowLeft } from "lucide-react";
-import Navbar from "@/components/Navbar";
 
 export default function AuthError() {
   const searchParams = useSearchParams();

@@ -6,3 +6,25 @@ body {
   @apply bg-white text-gray-900;
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-[#FF4B26] text-white rounded-lg text-sm font-medium 
+    hover:bg-[#E63E1C] transition-colors focus:outline-none focus:ring-2 focus:ring-[#FF4B26] focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium 
+    text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[#FF4B26] focus:ring-offset-2;
+  }
+
+  .filter-select {
+    @apply px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 
+    focus:ring-[#FF4B26] focus:border-transparent bg-white text-gray-700;
+  }
+
+  .action-btn {
+    @apply p-2 rounded-lg hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 
+    focus:ring-[#FF4B26] focus:ring-offset-2;
+  }
+}

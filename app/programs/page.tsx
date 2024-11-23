@@ -1,6 +1,5 @@
 import React from "react";
 import { Metadata } from "next";
-import Navbar from "@/components/Navbar";
 import ProgramsMain from "@/components/programs/ProgramsMain";
 
 export const metadata: Metadata = {

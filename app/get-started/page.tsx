@@ -1,6 +1,4 @@
 import { Metadata } from "next";
-
-import Navbar from "@/components/Navbar";
 import { Clock, Video, BookOpen, MessageCircle } from "lucide-react";
 import GetStartedForm from "@/components/get-started/GetStartedForm";
 

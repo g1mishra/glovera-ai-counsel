@@ -1,8 +1,6 @@
 import React from "react";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Navbar from "@/components/Navbar";
-import { Program, University } from "@/types";
 import ProgramDetail from "@/components/programs/ProgramDetail";
 
 interface Props {

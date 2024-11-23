@@ -58,7 +58,7 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
             {user ? (
               <div className="flex items-center space-x-4">
                 <Link
-                  href={user.role === "admin" ? "/admin/dashboard" : "/profile"}
+                  href={user.role === "admin" ? "/admin" : "/profile"}
                   className="flex items-center space-x-2 text-gray-600 hover:text-[#FF4B26]"
                 >
                   <User className="w-5 h-5" />
@@ -112,7 +112,7 @@ const Navbar: React.FC<NavbarProps> = ({ user }) => {
 
               {user ? (
                 <Link
-                  href={user.role === "admin" ? "/admin/dashboard" : "/profile"}
+                  href={user.role === "admin" ? "/admin" : "/profile"}
                   className="block px-3 py-2 rounded-md text-gray-600 hover:text-[#FF4B26] hover:bg-gray-50"
                   onClick={() => setIsMenuOpen(false)}
                 >
