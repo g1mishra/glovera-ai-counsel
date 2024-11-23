@@ -1,37 +1,34 @@
-export interface EligibilityCriteria {
-  high_school_percentage?: string;
-  subjects_required: string[];
-  language_proficiency?: string;
-  undergraduate_degree?: string;
-  minimum_gpa?: string;
-  work_experience?: string;
-  technical_skills?: string[];
-}
-
 export interface Program {
-  _id?: string;
-  program_name: string;
+  id: string;
+  course_name: string;
   degree_type: string;
-  duration: string;
-  eligibility_criteria: EligibilityCriteria;
   tuition_fee: string;
-  program_start_date: string;
-  program_description: string;
-}
-
-export interface University {
-  _id?: string;
+  duration: string;
   university_name: string;
-  location: string;
-  programs: Program[];
+  university_location: string;
+  global_rank: string;
+  program_url: string;
+  intake_date: string;
+  application_deadline: string;
+  english_requirements: {
+    ielts: string;
+    toefl: string;
+    pte: string;
+  };
+  min_gpa: string;
+  work_experience: string;
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+  program_description?: string;
 }
 
 export interface User {
-  _id?: string;
-  name: string;
-  email: string;
-  role: "student" | "admin";
-  profile?: StudentProfile;
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  role?: "student" | "admin";
+  profile?: UserProfile;
 }
 
 export interface StudentProfile {
@@ -87,13 +84,6 @@ export interface VideoSession {
   notes?: string;
 }
 
-export interface ProgramRecommendation {
-  program: Program;
-  university: University;
-  match_score: number;
-  match_reasons: string[];
-}
-
 export interface ContactFormData {
   name: string;
   email: string;
@@ -128,12 +118,11 @@ export interface PaginatedResponse<T> {
 
 export interface ProgramCardProps {
   program: Program;
-  university: University;
   onApply?: (programId: string) => void;
 }
 
 export interface ProgramListProps {
-  programs: Array<Program & { university: University }>;
+  programs: Array<Program>;
   loading?: boolean;
   error?: string;
 }
@@ -158,4 +147,21 @@ export interface AdminDashboardStats {
     program: Program;
     applications: number;
   }>;
+}
+
+export interface UserProfile {
+  id: string;
+  userId: string;
+  undergraduate_degree?: string | null;
+  university?: string | null;
+  gpa?: string | null;
+  language_proficiency?: {
+    test_type: string;
+    overall_score: string;
+  } | null;
+  work_experience_years?: string | null;
+  technical_skills: string[];
+  preferred_study_countries: string[];
+  target_intake?: string | null;
+  budget_range?: string | null;
 }

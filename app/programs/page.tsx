@@ -1,6 +1,7 @@
 import React from "react";
 import { Metadata } from "next";
 import ProgramsMain from "@/components/programs/ProgramsMain";
+import { getBasePath } from "@/utils/getBasePath";
 
 export const metadata: Metadata = {
   title: "Programs Explorer | Glovera",
@@ -8,21 +9,47 @@ export const metadata: Metadata = {
     "Explore international education programs and find your perfect match",
 };
 
-async function getPrograms() {
+interface ProgramsResponse {
+  programs: any[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+async function getPrograms(page: number = 1, limit: number = 10) {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/programs`
-    );
-    const data = await response.json();
+    const path = `${getBasePath()}/api/programs?page=${page}&limit=${limit}`;
+    const response = await fetch(path, { cache: "no-store" });
+
+    if (!response.ok) {
+      console.error("Failed to fetch programs:", response.statusText);
+      return {
+        programs: [],
+        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+      };
+    }
+
+    const data: ProgramsResponse = await response.json();
     return data;
   } catch (error) {
     console.error("Error fetching programs:", error);
-    return [];
+    return {
+      programs: [],
+      pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+    };
   }
 }
 
-export default async function Programs() {
-  const programs = await getPrograms();
+export default async function Programs({
+  searchParams,
+}: {
+  searchParams: { page?: string };
+}) {
+  const currentPage = parseInt(searchParams.page || "1", 10);
+  const { programs, pagination } = await getPrograms(currentPage);
 
   return (
     <div className="min-h-screen bg-white">
@@ -30,7 +57,7 @@ export default async function Programs() {
         <h1 className="text-4xl font-bold text-gray-900 mb-8">
           Explore Programs
         </h1>
-        <ProgramsMain program={programs} />
+        <ProgramsMain programs={programs} pagination={pagination} />
       </main>
     </div>
   );

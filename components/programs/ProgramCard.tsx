@@ -1,30 +1,21 @@
 "use client";
 
 import React from "react";
-import {
-  Calendar,
-  Clock,
-  DollarSign,
-  GraduationCap,
-  MapPin,
-} from "lucide-react";
-import { Program, University } from "@/types";
+import { Calendar, Clock, DollarSign, GraduationCap, MapPin } from "lucide-react";
+import { Program } from "@/types";
 import Link from "next/link";
 
 interface ProgramCardProps {
   program: Program;
-  university: University;
 }
 
-const ProgramCard: React.FC<ProgramCardProps> = ({ program, university }) => {
+const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6">
+    <div className="bg-white rounded-lg shadow hover:shadow-md transition-shadow p-6 border border-gray-200">
       <div className="space-y-4">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="text-xl font-semibold text-gray-900">
-              {program.program_name}
-            </h3>
+            <h3 className="text-xl font-semibold text-gray-900">{program.course_name}</h3>
             <p className="text-[#FF4B26] font-medium">{program.degree_type}</p>
           </div>
         </div>
@@ -32,11 +23,11 @@ const ProgramCard: React.FC<ProgramCardProps> = ({ program, university }) => {
         <div className="space-y-2">
           <div className="flex items-center text-gray-600">
             <GraduationCap className="w-4 h-4 mr-2" />
-            <span>{university.university_name}</span>
+            <span>{program.university_name}</span>
           </div>
           <div className="flex items-center text-gray-600">
             <MapPin className="w-4 h-4 mr-2" />
-            <span>{university.location}</span>
+            <span>{program.university_location}</span>
           </div>
           <div className="flex items-center text-gray-600">
             <Clock className="w-4 h-4 mr-2" />
@@ -44,7 +35,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({ program, university }) => {
           </div>
           <div className="flex items-center text-gray-600">
             <Calendar className="w-4 h-4 mr-2" />
-            <span>Starts {program.program_start_date}</span>
+            <span>Starts {program.intake_date}</span>
           </div>
           <div className="flex items-center text-gray-600">
             <DollarSign className="w-4 h-4 mr-2" />
@@ -55,32 +46,18 @@ const ProgramCard: React.FC<ProgramCardProps> = ({ program, university }) => {
         <div className="space-y-2">
           <h4 className="font-medium text-gray-900">Key Requirements:</h4>
           <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
-            {program.eligibility_criteria.minimum_gpa && (
-              <li>Minimum GPA: {program.eligibility_criteria.minimum_gpa}</li>
-            )}
-            {program.eligibility_criteria.language_proficiency && (
-              <li>{program.eligibility_criteria.language_proficiency}</li>
-            )}
-            {program.eligibility_criteria.work_experience && (
-              <li>
-                {program.eligibility_criteria.work_experience} work experience
-              </li>
-            )}
+            {program.min_gpa && <li>Minimum GPA: {program.min_gpa}</li>}
+            {program.english_requirements.ielts && <li>{program.english_requirements.ielts}</li>}
+            {program.work_experience && <li>{program.work_experience} work experience</li>}
           </ul>
         </div>
 
-        <div className="flex space-x-4 pt-4">
+        <div className="flex pt-4">
           <Link
-            href={`/programs/${program._id}`}
-            className="flex-1 px-4 py-2 text-center text-[#FF4B26] border border-[#FF4B26] rounded-lg hover:bg-[#FFF5F3] transition-colors"
-          >
-            Learn More
-          </Link>
-          <Link
-            href={`/programs/${program._id}/apply`}
+            href={`/programs/${program.id}`}
             className="flex-1 px-4 py-2 text-center bg-[#FF4B26] text-white rounded-lg hover:bg-[#E63E1C] transition-colors"
           >
-            Apply Now
+            Learn More
           </Link>
         </div>
       </div>

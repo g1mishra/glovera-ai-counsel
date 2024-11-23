@@ -1,7 +1,7 @@
-import React from "react";
+import ProgramDetail from "@/components/programs/ProgramDetail";
+import { getBasePath } from "@/utils/getBasePath";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import ProgramDetail from "@/components/programs/ProgramDetail";
 
 interface Props {
   params: { programId: string };
@@ -9,10 +9,11 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
-    const program = await fetchProgramDetails(params.programId);
+    const { programId } = await params;
+    const program = await fetchProgramDetails(programId);
     return {
-      title: `${program.program_name} at ${program.university.university_name} | Glovera`,
-      description: program.program_description,
+      title: `${program?.course_name} at ${program?.university_name} | Glovera`,
+      description: program?.program_description,
     };
   } catch (error) {
     return {
@@ -23,17 +24,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 async function fetchProgramDetails(programId: string) {
+  if (!programId) return null;
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/programs/${programId}`,
-      { next: { revalidate: 3600 } }
+      `${getBasePath()}/api/programs?programId=${programId}`,
+      {
+        next: { revalidate: 3600 },
+      }
     );
 
     if (!response.ok) {
       throw new Error("Failed to fetch program details");
     }
 
-    return await response.json();
+    const data = await response.json();
+
+    return data?.program || null;
   } catch (error) {
     console.error("Error fetching program details:", error);
     notFound();
@@ -41,7 +47,9 @@ async function fetchProgramDetails(programId: string) {
 }
 
 export default async function ProgramDetailPage({ params }: Props) {
-  const program = await fetchProgramDetails(params.programId);
+  const program = await fetchProgramDetails(params?.programId);
+
+  console.log(program);
 
   return (
     <div className="min-h-screen bg-white">

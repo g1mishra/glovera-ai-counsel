@@ -60,7 +60,7 @@ const ContactForm = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-8">
+    <div className="bg-white rounded-lg shadow-md p-8 border border-gray-200 max-w-3xl mx-auto">
       <h2 className="text-2xl font-semibold mb-6">Send us a Message</h2>
 
       {success && (
