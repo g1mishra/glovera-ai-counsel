@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
+import HeroVideoWidget from "./HeroChatWidget";
 
 const HeroSection = () => {
   return (
@@ -29,12 +29,8 @@ const HeroSection = () => {
             </Link>
           </div>
         </div>
-        <div className="relative">
-          <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <MessageCircle className="w-16 h-16 text-[#FF4B26]" />
-            </div>
-          </div>
+        <div className="flex justify-center">
+          <HeroVideoWidget />
         </div>
       </div>
     </div>
