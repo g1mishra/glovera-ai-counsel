@@ -1,15 +1,15 @@
 "use client";
 
 import { User } from "@/types";
-import { useState, useEffect, useRef } from "react";
-import { MessageCircle, Video, Mic, Send, PlusCircle } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { MessageCircle, Video, Mic, Send, PlusCircle, Square } from "lucide-react";
 import { toast } from "react-hot-toast";
+import dynamic from "next/dynamic";
 
+const AvatarComponent = dynamic(() => import("./AvatarComponent"), { ssr: false });
 interface AIChatProps {
   user: User;
 }
-
-type CommunicationMode = "chat" | "video" | "audio";
 
 interface Message {
   type: "user" | "ai";
@@ -22,14 +22,26 @@ export default function AIChat({ user }: AIChatProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const headRef = useRef<any>(null);
+  const [avatarLoading, setAvatarLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const [isAvatarReady, setIsAvatarReady] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const speakingTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const handleAvatarReady = useCallback((head: any) => {
+    headRef.current = head;
+    setAvatarLoading(false);
+    setIsAvatarReady(true);
+  }, []);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const handleLoadingProgress = useCallback((progress: number) => {
+    setLoadingProgress(progress);
+  }, []);
 
   useEffect(() => {
     const sessionConversationId = sessionStorage.getItem("counseling-session-id");
@@ -92,7 +104,6 @@ export default function AIChat({ user }: AIChatProps) {
       if (data.success) {
         const newConversationId = data.data.conversation_id;
         setConversationId(newConversationId);
-        // Store in session storage with a more generic name
         sessionStorage.setItem("counseling-session-id", newConversationId);
         setMessages([
           {
@@ -142,6 +153,40 @@ export default function AIChat({ user }: AIChatProps) {
             content: data.data.ai_response,
           },
         ]);
+
+        if (headRef.current) {
+          try {
+            setIsSpeaking(true);
+
+            if (speakingTimeoutRef.current) {
+              clearTimeout(speakingTimeoutRef.current);
+            }
+
+            speakingTimeoutRef.current = setTimeout(() => {
+              setIsSpeaking(false);
+            }, 5000);
+
+            await headRef.current.speakText(data.data.ai_response, null, (subtitles: any) => {
+              if (speakingTimeoutRef.current) {
+                clearTimeout(speakingTimeoutRef.current);
+              }
+
+              speakingTimeoutRef.current = setTimeout(() => {
+                setIsSpeaking(false);
+              }, 2000);
+
+              console.log("Subtitles:", subtitles);
+            });
+          } catch (error) {
+            console.error("Avatar speech error:", error);
+            setIsSpeaking(false);
+          } finally {
+            if (speakingTimeoutRef.current) {
+              clearTimeout(speakingTimeoutRef.current);
+            }
+            setIsSpeaking(false);
+          }
+        }
       } else {
         toast.error("Failed to get response");
       }
@@ -153,38 +198,164 @@ export default function AIChat({ user }: AIChatProps) {
     }
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setAudioStream(stream);
+
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(chunksRef.current, { type: "audio/wav" });
+        const reader = new FileReader();
+
+        reader.onloadend = async () => {
+          const base64Audio = (reader.result as string).split(",")[1];
+          await handleAudioMessage(base64Audio);
+        };
+
+        reader.readAsDataURL(audioBlob);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+      toast.error("Could not access microphone");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      audioStream?.getTracks().forEach((track) => track.stop());
+      setAudioStream(null);
+      setIsRecording(false);
+    }
+  };
+
+  const handleAudioMessage = async (audio_base64: string) => {
+    if (!conversationId) return;
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "continue",
+          conversationId,
+          audio_base64,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: "user",
+            content: "🎤 Audio message sent",
+          },
+          {
+            type: "ai",
+            content: data.data.ai_response,
+          },
+        ]);
+
+        if (headRef.current) {
+          try {
+            await headRef.current.speakText(data.data.ai_response);
+          } catch (error) {
+            console.error("Avatar speech error:", error);
+          }
+        }
+      } else {
+        toast.error("Failed to process audio message");
+      }
+    } catch (error) {
+      console.error("Audio message error:", error);
+      toast.error("Failed to send audio message");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (speakingTimeoutRef.current) {
+        clearTimeout(speakingTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-      <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow p-6 min-h-[500px]">
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <div className="w-48 h-48 bg-[#FFF5F3] rounded-full mx-auto mb-6 flex items-center justify-center shadow-[0_4px_20px_rgb(255,75,38,0.12)]">
-              <MessageCircle className="w-24 h-24 text-[#FF4B26]" />
+      <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow p-6 min-h-[300px] sm:min-h-[500px]">
+        <div className="flex flex-col items-center justify-center h-full">
+          {avatarLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-900/10 rounded-lg z-10">
+              <div className="text-center">
+                <div className="w-16 h-16 border-4 border-[#FF4B26] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-700">Loading Avatar... {loadingProgress}%</p>
+              </div>
             </div>
-            <h2 className="text-xl font-semibold mb-6">AI Counselor</h2>
-            <div className="flex max-sm:flex-col justify-center gap-4">
-              {messages.length > 0 && (
-                <button
-                  onClick={startNewConversation}
-                  className="flex items-center px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors max-sm:mb-0"
-                >
-                  <PlusCircle className="w-5 h-5 mr-2" />
-                  New Session
-                </button>
+          )}
+          <AvatarComponent
+            onAvatarReady={handleAvatarReady}
+            onLoadingProgress={handleLoadingProgress}
+          />
+          <div className="flex max-sm:flex-col justify-center gap-4 mt-4">
+            {messages.length > 0 && (
+              <button
+                onClick={startNewConversation}
+                disabled={!isAvatarReady || isLoading || isRecording}
+                className="flex items-center px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors max-sm:mb-0 disabled:opacity-50 disabled:hover:bg-white"
+              >
+                <PlusCircle className="w-5 h-5 mr-2" />
+                New Session
+              </button>
+            )}
+            <button
+              onClick={isRecording ? stopRecording : startRecording}
+              disabled={!isAvatarReady || isLoading}
+              className={`flex items-center px-4 py-2 border ${
+                isRecording
+                  ? "bg-red-500 border-red-500 text-white"
+                  : "border-[#FF4B26] text-[#FF4B26]"
+              } rounded-lg hover:bg-[#E63E1C] hover:text-white transition-colors shadow-[0_4px_12px_rgb(255,75,38,0.24)] disabled:opacity-50 disabled:bg-gray-400 disabled:border-gray-400 disabled:shadow-none`}
+            >
+              {isRecording ? (
+                <>
+                  <Square className="w-5 h-5 mr-2" />
+                  Stop Recording
+                </>
+              ) : (
+                <>
+                  <Mic className="w-5 h-5 mr-2" />
+                  Record Audio
+                </>
               )}
-              <button
-                className={`flex items-center px-4 py-2 border border-[#FF4B26] text-[#FF4B26] rounded-lg hover:bg-[#E63E1C] hover:text-white transition-colors shadow-[0_4px_12px_rgb(255,75,38,0.24)]`}
-              >
-                <Video className="w-5 h-5 mr-2" />
-                Video
-              </button>
-              <button
-                className={`flex items-center px-4 py-2 border border-[#FF4B26] text-[#FF4B26] rounded-lg hover:bg-[#E63E1C] hover:text-white transition-colors shadow-[0_4px_12px_rgb(255,75,38,0.24)]`}
-              >
-                <Mic className="w-5 h-5 mr-2" />
-                Audio
-              </button>
-            </div>
+            </button>
           </div>
         </div>
       </div>
@@ -229,15 +400,25 @@ export default function AIChat({ user }: AIChatProps) {
             type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FF4B26] focus:ring-2 focus:ring-[#FF4B26]/20 transition-all"
+            placeholder={
+              !isAvatarReady
+                ? "Please wait for avatar to load..."
+                : isRecording
+                ? "Recording in progress..."
+                : isSpeaking
+                ? "Listening to response..."
+                : "Type your message..."
+            }
+            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FF4B26] focus:ring-2 focus:ring-[#FF4B26]/20 transition-all disabled:opacity-50 disabled:bg-gray-50"
             onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
-            disabled={isLoading}
+            disabled={!isAvatarReady || isLoading || isRecording || isSpeaking}
           />
           <button
             onClick={handleSendMessage}
-            disabled={!inputMessage.trim() || isLoading}
-            className="p-2 bg-[#FF4B26] text-white rounded-lg hover:bg-[#E63E1C] transition-colors disabled:opacity-50 shadow-[0_4px_12px_rgb(255,75,38,0.24)]"
+            disabled={
+              !isAvatarReady || !inputMessage.trim() || isLoading || isRecording || isSpeaking
+            }
+            className="p-2 bg-[#FF4B26] text-white rounded-lg hover:bg-[#E63E1C] transition-colors disabled:opacity-50 disabled:bg-gray-400 shadow-[0_4px_12px_rgb(255,75,38,0.24)]"
           >
             <Send className="w-5 h-5" />
           </button>
