@@ -69,7 +69,7 @@ export default function AvatarComponent({
 
         head = new TalkingHead(avatarRef.current, {
           ttsEndpoint: "https://eu-texttospeech.googleapis.com/v1beta1/text:synthesize",
-          ttsApikey: "AIzaSyBJlm-YzDgkPyzDkmgn6mnK6Tuwu21FaPw",
+          ttsApikey: process.env.NEXT_PUBLIC_GOOGLE_TTS_API_KEY,
           lipsyncModules: ["en", "fi"],
           cameraView: "upper",
           gltfUrl: "https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb",
