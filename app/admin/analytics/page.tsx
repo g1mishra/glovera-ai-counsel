@@ -1,27 +1,25 @@
 "use client";
 
-import React from "react";
 import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
-import {
+  ArrowDownRight,
+  ArrowUpRight,
+  MessageSquare,
   TrendingUp,
   Users,
-  MessageSquare,
-  ArrowUpRight,
-  ArrowDownRight,
 } from "lucide-react";
+import React from "react";
+import {
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from "recharts";
 
 const AnalyticsOverview = () => {
   // Sample data
