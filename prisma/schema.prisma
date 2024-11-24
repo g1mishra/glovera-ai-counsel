@@ -83,9 +83,9 @@ model Program {
 }
 
 type EnglishRequirements {
-    ielts Float?
-    toefl Float?
-    pte   Float?
+    ielts Float
+    toefl Float  
+    pte   Float  
 }
 
 type Message {

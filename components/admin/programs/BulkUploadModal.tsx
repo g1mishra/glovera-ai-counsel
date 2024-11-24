@@ -4,8 +4,29 @@ import Modal from "@/components/common/Modal";
 import { Upload, Loader2, Download } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { getBasePath } from "@/utils/getBasePath";
 import * as XLSX from "xlsx";
+
+type EnglishRequirements = {
+  ielts: number | null;
+  toefl: number | null;
+  pte: number | null;
+};
+
+type Program = {
+  course_name: string;
+  degree_type: string;
+  tuition_fee: number;
+  duration: string;
+  university_name: string;
+  university_location: string;
+  global_rank?: string | null;
+  program_url?: string | null;
+  start_date: string;
+  apply_date: string;
+  english_requirments: EnglishRequirements | null;
+  min_gpa?: number | null;
+  work_experience?: number | null;
+};
 
 export type BulkUploadModalProps = {
   isBulkModalOpen: boolean;
@@ -28,7 +49,8 @@ export const BulkUploadModal = ({
 
     const droppedFile = e.dataTransfer.files[0];
     if (
-      droppedFile?.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      droppedFile?.type ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
       droppedFile?.type === "text/csv"
     ) {
       setFile(droppedFile);
@@ -44,7 +66,56 @@ export const BulkUploadModal = ({
     }
   };
 
-  const parseExcelFile = async (file: File): Promise<any[]> => {
+  const parseNumber = (value: any): number | null => {
+    if (value === null || value === undefined || value === "") return null;
+
+    // Handle string numbers with decimal points
+    if (typeof value === "string") {
+      value = value.replace(/,/g, "").trim();
+    }
+
+    const parsed = Number(value);
+    return isNaN(parsed) ? null : parsed;
+  };
+
+  const validateRow = (
+    row: any,
+    headers: string[],
+    rowIndex: number
+  ): string[] => {
+    const errors: string[] = [];
+
+    // Required fields
+    const requiredFields = [
+      "course_name",
+      "degree_type",
+      "tuition_fee",
+      "duration",
+      "university_name",
+      "university_location",
+      "start_date",
+      "apply_date",
+    ];
+
+    requiredFields.forEach((field) => {
+      const index = headers.indexOf(field);
+      if (index === -1 || !row[index]) {
+        errors.push(`${field} is required`);
+      }
+    });
+
+    // Validate tuition fee
+    const tuitionIndex = headers.indexOf("tuition_fee");
+    if (tuitionIndex !== -1) {
+      const fee = parseNumber(row[tuitionIndex]);
+      if (fee === null || fee <= 0) {
+        errors.push("tuition_fee must be a positive number");
+      }
+    }
+
+    return errors;
+  };
+  const parseExcelFile = async (file: File): Promise<Program[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
 
@@ -55,58 +126,149 @@ export const BulkUploadModal = ({
           const sheetName = workbook.SheetNames[0];
           const sheet = workbook.Sheets[sheetName];
 
-          // Convert sheet to JSON with header row
-          const jsonData: any = XLSX.utils.sheet_to_json(sheet, {
-            header: 1,
-            raw: false,
-            defval: "",
-          });
+          // Convert sheet to JSON with raw: true to get proper date values
+          const jsonData = XLSX.utils.sheet_to_json(sheet, { raw: true });
 
-          // Remove header row and empty rows
-          const rows = jsonData.slice(1).filter((row: any) => row.some((cell: any) => cell !== ""));
-
-          // Get headers (convert to lowercase and trim)
-          const headers = jsonData[0].map((header: string) => header.toLowerCase().trim());
-
-          // Transform data to match API schema
-          const transformedData = rows.map((row: any) => {
-            const program: any = {
-              course_name: row[headers.indexOf("course_name")] || "",
-              degree_type: row[headers.indexOf("degree_type")] || "",
-              tuition_fee: row[headers.indexOf("tuition_fee")]?.toString() || "",
-              duration: row[headers.indexOf("duration")]?.toString() || "",
-              university_name: row[headers.indexOf("university_name")] || "",
-              university_location: row[headers.indexOf("university_location")] || "",
-              start_date: row[headers.indexOf("start_date")] || "",
-              apply_date: row[headers.indexOf("apply_date")] || "",
-              english_requirments: {
-                ielts: row[headers.indexOf("ielts")] || null,
-                toefl: row[headers.indexOf("toefl")] || null,
-                pte: row[headers.indexOf("pte")] || null,
-              },
-              min_gpa: row[headers.indexOf("min_gpa")] || null,
-              work_experience: row[headers.indexOf("work_experience")] || null,
+          const transformedData: Program[] = jsonData.map((row: any) => {
+            // Parse english requirements from JSON string
+            let englishReq = {
+              ielts: 0,
+              toefl: 0,
+              pte: 0,
             };
 
-            // Add optional fields if they exist
-            const programUrlIndex = headers.indexOf("program_url");
-            if (programUrlIndex !== -1) {
-              program.program_url = row[programUrlIndex] || "";
+            try {
+              if (row.english_requirments) {
+                if (typeof row.english_requirments === "string") {
+                  const parsedReq = JSON.parse(row.english_requirments);
+                  englishReq = {
+                    ielts: parsedReq.ielts ? Number(parsedReq.ielts) : 0,
+                    toefl: parsedReq.toefl ? Number(parsedReq.toefl) : 0,
+                    pte: parsedReq.pte ? Number(parsedReq.pte) : 0,
+                  };
+                } else if (typeof row.english_requirments === "object") {
+                  englishReq = {
+                    ielts: row.english_requirments.ielts
+                      ? Number(row.english_requirments.ielts)
+                      : 0,
+                    toefl: row.english_requirments.toefl
+                      ? Number(row.english_requirments.toefl)
+                      : 0,
+                    pte: row.english_requirments.pte
+                      ? Number(row.english_requirments.pte)
+                      : 0,
+                  };
+                }
+              }
+            } catch (error) {
+              console.error("Error parsing english requirements:", error);
             }
 
-            return program;
+            // Format dates properly
+            const formatDate = (dateValue: any): string => {
+              if (!dateValue) return "";
+
+              // If it's a date string, parse it
+              if (typeof dateValue === "string") {
+                // Check if it's a date in "Month Year" format
+                if (dateValue.includes(" ")) {
+                  const [month, year] = dateValue.split(" ");
+                  return `${month.slice(0, 3)} 1, ${year}`; // Convert to "MMM 1, YYYY"
+                }
+                return dateValue;
+              }
+
+              // If it's an Excel date number, convert it
+              if (typeof dateValue === "number") {
+                const date = XLSX.SSF.parse_date_code(dateValue);
+                return `${date.m}/${date.d}/${date.y}`;
+              }
+
+              return dateValue;
+            };
+
+            // Remove unnecessary fields and transform the data
+            return {
+              course_name: String(row.course_name || "").trim(),
+              degree_type: String(row.degree_type || "").trim(),
+              tuition_fee: Number(row.tuition_fee),
+              duration: String(row.duration || "").trim(),
+              university_name: String(row.university_name || "").trim(),
+              university_location: String(row.university_location || "").trim(),
+              start_date: formatDate(row.start_date),
+              apply_date: formatDate(row.apply_date),
+              english_requirments: englishReq,
+              min_gpa: row.min_gpa ? Number(row.min_gpa) : null,
+              work_experience: row.work_experience
+                ? Number(row.work_experience)
+                : 0,
+              global_rank: row.global_rank
+                ? String(Number(row.global_rank) * 100).replace(/[^0-9.]/g, "")
+                : null,
+              program_url: row.program_url
+                ? String(row.program_url).trim()
+                : null,
+            };
           });
 
           resolve(transformedData);
         } catch (error) {
           console.error("Error parsing file:", error);
-          reject(new Error("Failed to parse file. Please check the file format."));
+          reject(error);
         }
       };
 
       reader.onerror = (error) => reject(error);
       reader.readAsArrayBuffer(file);
     });
+  };
+
+  // Also update the template data to match the expected format
+  const handleDownloadTemplate = () => {
+    const template = [
+      {
+        course_name: "Master of Business Analytics",
+        degree_type: "M.Sc. / Full-time / On Campus",
+        tuition_fee: 25000,
+        duration: "2 years",
+        university_name: "Example University",
+        university_location: "London, UK",
+        global_rank: "50",
+        program_url: "https://example.com/program",
+        start_date: "09/01/2024",
+        apply_date: "03/01/2024",
+        ielts: 6.5,
+        toefl: 90,
+        pte: 60,
+        min_gpa: 3.0,
+        work_experience: 2,
+      },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(template);
+
+    // Set column widths for better visibility
+    ws["!cols"] = [
+      { wch: 30 }, // course_name
+      { wch: 25 }, // degree_type
+      { wch: 12 }, // tuition_fee
+      { wch: 10 }, // duration
+      { wch: 25 }, // university_name
+      { wch: 25 }, // university_location
+      { wch: 12 }, // global_rank
+      { wch: 40 }, // program_url
+      { wch: 12 }, // start_date
+      { wch: 12 }, // apply_date
+      { wch: 8 }, // ielts
+      { wch: 8 }, // toefl
+      { wch: 8 }, // pte
+      { wch: 8 }, // min_gpa
+      { wch: 15 }, // work_experience
+    ];
+
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.writeFile(wb, "program_upload_template.xlsx");
   };
 
   const handleUpload = async () => {
@@ -117,71 +279,44 @@ export const BulkUploadModal = ({
 
     try {
       const programsData = await parseExcelFile(file);
-      const formattedData = programsData.map((program) => ({
-        course_name: program.course_name,
-        degree_type: program.degree_type,
-        tuition_fee: program.tuition_fee?.toString(),
-        duration: program.duration?.toString(),
-        university_name: program.university_name,
-        university_location: program.university_location,
-        start_date: program.start_date,
-        apply_date: program.apply_date,
-        english_requirments: {
-          ielts: program.ielts?.toString() || "",
-          toefl: program.toefl?.toString() || "",
-          pte: program.pte?.toString() || "",
-        },
-        min_gpa: program.min_gpa?.toString() || "",
-        work_experience: program.work_experience?.toString() || "",
-        global_rank: program.global_rank?.toString() || "",
-        program_url: program.program_url || "",
-      }));
+
+      if (programsData.length === 0) {
+        throw new Error("No valid data found in the file");
+      }
 
       const response = await fetch("/api/programs/import/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formattedData),
+        body: JSON.stringify(programsData),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        let errorMessage = "";
-        let throwErrorMsg = "";
+        let errorMessage = "Upload failed: ";
 
         if (response.status === 409) {
-          // Handle duplicate entries
-          if (result.duplicates) {
-            errorMessage =
-              "Duplicate programs found:\n" +
-              result.duplicates
-                .map(
-                  (dup: any) =>
-                    `Row ${dup.row}: ${dup.details.course_name} at ${dup.details.university_name} (${dup.details.degree_type})`
-                )
-                .join("\n");
-
-            throwErrorMsg = `Duplicate programs found : ${result.duplicates.length}`;
-          } else {
-            errorMessage = result.error || "Duplicate entries detected";
-          }
+          errorMessage += result.details || result.error;
         } else if (result.errors) {
-          // Handle validation errors
-          errorMessage =
-            "Validation errors:\n" +
-            result.errors
-              .map((err: any) => `Row ${err.row}: ${JSON.stringify(err.error)}`)
-              .join("\n");
-          throwErrorMsg = `Validation errors found : ${result.errors.length}`;
+          errorMessage += result.errors
+            .map(
+              (err: any) =>
+                `Row ${err.row}: ${
+                  Array.isArray(err.error)
+                    ? err.error
+                        .map((e: any) => `${e.path}: ${e.message}`)
+                        .join(", ")
+                    : err.error
+                }`
+            )
+            .join("\n");
         } else {
-          errorMessage = result.error || "Failed to upload programs";
+          errorMessage += result.error || "Unknown error occurred";
         }
 
-        console.log("errorMessage", errorMessage);
-
-        throw new Error(throwErrorMsg || errorMessage);
+        throw new Error(errorMessage);
       }
 
       toast.success(`Successfully imported ${result.imported} programs`, {
@@ -203,37 +338,6 @@ export const BulkUploadModal = ({
     } finally {
       setIsUploading(false);
     }
-  };
-
-  const handleDownloadTemplate = () => {
-    // Create template data
-    const template = [
-      {
-        course_name: "Example Course",
-        degree_type: "Bachelor's",
-        tuition_fee: "10000",
-        duration: "4 years",
-        university_name: "Example University",
-        university_location: "City, Country",
-        global_rank: "100",
-        program_url: "https://example.com",
-        start_date: "2024-09-01",
-        apply_date: "2024-08-01",
-        ielts: "6.5",
-        toefl: "90",
-        pte: "60",
-        min_gpa: "3.0",
-        work_experience: "2 years",
-      },
-    ];
-
-    // Create workbook
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(template);
-    XLSX.utils.book_append_sheet(wb, ws, "Template");
-
-    // Save file
-    XLSX.writeFile(wb, "program_upload_template.xlsx");
   };
 
   return (
@@ -270,16 +374,22 @@ export const BulkUploadModal = ({
               onChange={handleFileChange}
               id="file-upload"
             />
-            <label htmlFor="file-upload" className="btn-secondary inline-block cursor-pointer">
+            <label
+              htmlFor="file-upload"
+              className="btn-secondary inline-block cursor-pointer"
+            >
               Browse Files
             </label>
           </div>
         </div>
 
         <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">Need a template?</h4>
+          <h4 className="text-sm font-medium text-gray-900 mb-2">
+            Need a template?
+          </h4>
           <p className="text-sm text-gray-600 mb-3">
-            Download our Excel template to ensure your data is formatted correctly.
+            Download our Excel template to ensure your data is formatted
+            correctly.
           </p>
           <button
             className="btn-secondary flex items-center gap-2"
@@ -291,7 +401,11 @@ export const BulkUploadModal = ({
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button onClick={onCloseBulkModal} className="btn-secondary" disabled={isUploading}>
+          <button
+            onClick={onCloseBulkModal}
+            className="btn-secondary"
+            disabled={isUploading}
+          >
             Cancel
           </button>
           <button
