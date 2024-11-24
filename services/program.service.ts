@@ -10,7 +10,7 @@ export interface ProgramsResponse {
   };
 }
 
-export async function getPrograms(page: number = 1, limit: number = 10) {
+export async function getPrograms(page: number = 1, limit: number = 9) {
   try {
     const path = `${getBasePath()}/api/programs?page=${page}&limit=${limit}`;
     const response = await fetch(path, { cache: "no-store" });
@@ -19,7 +19,7 @@ export async function getPrograms(page: number = 1, limit: number = 10) {
       console.error("Failed to fetch programs:", response.statusText);
       return {
         programs: [],
-        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+        pagination: { total: 0, page: 1, limit: 9, totalPages: 0 },
       };
     }
 
@@ -29,7 +29,7 @@ export async function getPrograms(page: number = 1, limit: number = 10) {
     console.error("Error fetching programs:", error);
     return {
       programs: [],
-      pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+      pagination: { total: 0, page: 1, limit: 9, totalPages: 0 },
     };
   }
 }
