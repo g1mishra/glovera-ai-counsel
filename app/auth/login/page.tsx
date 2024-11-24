@@ -21,10 +21,8 @@ export default async function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex justify-center items-center">
-      <main className="max-w-lg w-full px-4 sm:px-6 lg:px-8 py-12 border border-gray-100 rounded-xl shadow">
-        <LoginForm />
-      </main>
+    <div className="min-h-[calc(100vh-64px)] bg-white flex justify-center items-center">
+      <LoginForm />
     </div>
   );
 }

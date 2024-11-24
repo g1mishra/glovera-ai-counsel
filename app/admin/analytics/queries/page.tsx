@@ -18,7 +18,6 @@ import {
 import { Search, Target, TrendingUp, Filter } from "lucide-react";
 
 const QueryPatterns = () => {
-  // Sample data for various charts
   const topSearchTerms = [
     { term: "Computer Science", count: 245 },
     { term: "Data Science", count: 198 },
@@ -51,15 +50,12 @@ const QueryPatterns = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Query Patterns</h1>
         <p className="mt-1 text-sm text-gray-500">
           Analysis of search patterns and user query behaviors
         </p>
       </div>
-
-      {/* Quick Stats */}
       <div className="grid grid-cols-4 gap-4">
         <QueryStatCard
           title="Total Searches"
@@ -90,8 +86,6 @@ const QueryPatterns = () => {
           icon={Filter}
         />
       </div>
-
-      {/* Top Search Terms */}
       <div className="grid grid-cols-2 gap-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex justify-between items-center mb-6">
@@ -128,8 +122,6 @@ const QueryPatterns = () => {
             </ResponsiveContainer>
           </div>
         </div>
-
-        {/* Query Categories */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -180,101 +172,6 @@ const QueryPatterns = () => {
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Search Success Rate */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">
-              Search Success Rate
-            </h2>
-            <p className="text-sm text-gray-500">
-              Daily successful vs. failed searches
-            </p>
-          </div>
-          <select className="filter-select">
-            <option>Last 7 days</option>
-            <option>Last 30 days</option>
-          </select>
-        </div>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={searchResultsData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="successful"
-                stroke="#FF4B26"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                name="Successful Searches"
-              />
-              <Line
-                type="monotone"
-                dataKey="failed"
-                stroke="#FF8C61"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                name="Failed Searches"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Search Insights */}
-      <div className="grid grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Common Failed Searches
-          </h3>
-          <div className="space-y-4">
-            {[
-              { term: "Aerospace Design", count: 45 },
-              { term: "Sports Management", count: 38 },
-              { term: "Digital Marketing", count: 32 },
-              { term: "Game Development", count: 28 },
-            ].map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <span className="text-gray-900">{item.term}</span>
-                <span className="text-sm text-red-600">
-                  {item.count} failed attempts
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Popular Filter Combinations
-          </h3>
-          <div className="space-y-4">
-            {[
-              { filters: "Location + Program Type", usage: "32%" },
-              { filters: "Fee Range + Duration", usage: "28%" },
-              { filters: "University Rating + Course", usage: "25%" },
-              { filters: "Intake Date + Language", usage: "15%" },
-            ].map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <span className="text-gray-900">{item.filters}</span>
-                <span className="text-sm text-[#FF4B26]">
-                  {item.usage} usage
-                </span>
-              </div>
-            ))}
           </div>
         </div>
       </div>
