@@ -52,10 +52,13 @@ export async function GET(request: NextRequest) {
         });
       } catch (error) {
         console.error("Error fetching program:", error);
-        return new Response(JSON.stringify({ error: "Failed to fetch program" }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "Failed to fetch program" }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
     } else {
       try {
@@ -90,10 +93,13 @@ export async function GET(request: NextRequest) {
         );
       } catch (error) {
         console.error("Error fetching programs:", error);
-        return new Response(JSON.stringify({ error: "Failed to fetch programs" }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "Failed to fetch programs" }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
     }
   } catch (error) {
@@ -116,8 +122,8 @@ export async function POST(request: NextRequest) {
       "duration",
       "university_name",
       "university_location",
-      "intake_date",
-      "application_deadline",
+      "start_date",
+      "apply_date",
     ];
 
     const missingFields = requiredFields.filter((field) => !data[field]);
@@ -139,19 +145,23 @@ export async function POST(request: NextRequest) {
         duration: data.duration,
         university_name: data.university_name,
         university_location: data.university_location,
-        intake_date: data.intake_date,
-        application_deadline: data.application_deadline,
-        english_requirements: data.english_requirements || null,
+        start_date: data.start_date,
+        apply_date: data.apply_date,
+        english_requirments: data.english_requirments || null,
         min_gpa: data.min_gpa || null,
         work_experience: data.work_experience || null,
         isActive: true,
+        tuition_fee_currency: data?.tuition_fee_currency || "INR",
       },
     });
 
     return Response.json(program, { status: 201 });
   } catch (error) {
     console.error("Error creating program:", error);
-    return Response.json({ error: "Failed to create program" }, { status: 500 });
+    return Response.json(
+      { error: "Failed to create program" },
+      { status: 500 }
+    );
   }
 }
 
@@ -161,7 +171,10 @@ export async function PUT(request: NextRequest) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return Response.json({ error: "Program ID is required" }, { status: 400 });
+      return Response.json(
+        { error: "Program ID is required" },
+        { status: 400 }
+      );
     }
 
     const data = await request.json();
@@ -175,18 +188,21 @@ export async function PUT(request: NextRequest) {
         duration: data.duration,
         university_name: data.university_name,
         university_location: data.university_location,
-        intake_date: data.intake_date,
-        application_deadline: data.application_deadline,
-        english_requirements: data.english_requirements || null,
-        min_gpa: data.min_gpa || null,
-        work_experience: data.work_experience || null,
+        start_date: data.start_date,
+        apply_date: data.apply_date,
+        english_requirments: data.english_requirments,
+        min_gpa: data.min_gpa,
+        work_experience: data.work_experience,
       },
     });
 
     return Response.json(program);
   } catch (error) {
     console.error("Error updating program:", error);
-    return Response.json({ error: "Failed to update program" }, { status: 500 });
+    return Response.json(
+      { error: "Failed to update program" },
+      { status: 500 }
+    );
   }
 }
 
@@ -196,16 +212,25 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return Response.json({ error: "Program ID is required" }, { status: 400 });
+      return Response.json(
+        { error: "Program ID is required" },
+        { status: 400 }
+      );
     }
 
     await prisma.program.delete({
       where: { id },
     });
 
-    return Response.json({ message: "Program deleted successfully" }, { status: 200 });
+    return Response.json(
+      { message: "Program deleted successfully" },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error deleting program:", error);
-    return Response.json({ error: "Failed to delete program" }, { status: 500 });
+    return Response.json(
+      { error: "Failed to delete program" },
+      { status: 500 }
+    );
   }
 }

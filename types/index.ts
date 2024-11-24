@@ -6,18 +6,17 @@ export interface Program {
   duration: string;
   university_name: string;
   university_location: string;
-  global_rank: string;
   program_url: string;
-  intake_date: string;
-  application_deadline: string;
+  start_date: string;
+  apply_date: string;
   isActive?: boolean;
-  english_requirements: {
-    ielts: string;
-    toefl: string;
-    pte: string;
+  english_requirments: {
+    ielts: number;
+    toefl: number;
+    pte: number;
   };
-  min_gpa: string;
-  work_experience: string;
+  min_gpa: number;
+  work_experience: number;
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
   program_description?: string;
