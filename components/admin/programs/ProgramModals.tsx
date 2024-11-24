@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   School,
   Calendar,
-  DollarSign,
+  IndianRupee,
   Languages,
   MapPin,
   Building,
@@ -266,7 +266,7 @@ export const AddProgramModal = ({
           />
           <InputField
             label="Tuition Fee (INR)"
-            icon={DollarSign}
+            icon={IndianRupee}
             type="number"
             placeholder="Enter tuition fee"
             value={formData.tuition_fee}

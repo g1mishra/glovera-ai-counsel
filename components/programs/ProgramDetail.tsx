@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   Calendar,
   Clock,
-  DollarSign,
+  IndianRupee,
   GraduationCap,
   MapPin,
   CheckCircle,
@@ -22,7 +22,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ program }) => {
     <div className="space-y-8 text-gray-900">
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">{program.course_name}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            {program.course_name}
+          </h1>
           <div className="flex flex-wrap gap-4 text-gray-600 mb-6">
             <div className="flex items-center">
               <GraduationCap className="w-5 h-5 mr-2" />
@@ -37,7 +39,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ program }) => {
               <span>{program.duration}</span>
             </div>
             <div className="flex items-center">
-              <DollarSign className="w-5 h-5 mr-2" />
+              <IndianRupee className="w-5 h-5 mr-2" />
               <span>{program.tuition_fee}</span>
             </div>
             <div className="flex items-center">
@@ -56,11 +58,15 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ program }) => {
 
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8">
         <h2 className="text-2xl font-semibold mb-4">Program Overview</h2>
-        <p className="text-gray-600 whitespace-pre-line">{program.program_description}</p>
+        <p className="text-gray-600 whitespace-pre-line">
+          {program.program_description}
+        </p>
       </div>
 
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8">
-        <h2 className="text-2xl font-semibold mb-4">Eligibility Requirements</h2>
+        <h2 className="text-2xl font-semibold mb-4">
+          Eligibility Requirements
+        </h2>
         <div className="space-y-4">
           {program.min_gpa && (
             <div className="flex items-start">
@@ -87,7 +93,11 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ program }) => {
                 <div>
                   <h3 className="font-medium">{key}</h3>
                   <p className="text-gray-600">
-                    {program.english_requirments[key as keyof typeof program.english_requirments]}
+                    {
+                      program.english_requirments[
+                        key as keyof typeof program.english_requirments
+                      ]
+                    }
                   </p>
                 </div>
               </div>
