@@ -52,13 +52,10 @@ export async function GET(request: NextRequest) {
         });
       } catch (error) {
         console.error("Error fetching program:", error);
-        return new Response(
-          JSON.stringify({ error: "Failed to fetch program" }),
-          {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          }
-        );
+        return new Response(JSON.stringify({ error: "Failed to fetch program" }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
       }
     } else {
       try {
@@ -66,9 +63,13 @@ export async function GET(request: NextRequest) {
 
         const programs = await prisma.program.findMany({
           where,
-          orderBy: {
-            updatedAt: "desc",
-          },
+          orderBy: [
+            {
+              updatedAt: "desc",
+            },
+            { id: "asc" },
+          ],
+
           skip,
           take: limit,
         });
@@ -89,13 +90,10 @@ export async function GET(request: NextRequest) {
         );
       } catch (error) {
         console.error("Error fetching programs:", error);
-        return new Response(
-          JSON.stringify({ error: "Failed to fetch programs" }),
-          {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          }
-        );
+        return new Response(JSON.stringify({ error: "Failed to fetch programs" }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
       }
     }
   } catch (error) {
@@ -153,10 +151,7 @@ export async function POST(request: NextRequest) {
     return Response.json(program, { status: 201 });
   } catch (error) {
     console.error("Error creating program:", error);
-    return Response.json(
-      { error: "Failed to create program" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to create program" }, { status: 500 });
   }
 }
 
@@ -166,10 +161,7 @@ export async function PUT(request: NextRequest) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return Response.json(
-        { error: "Program ID is required" },
-        { status: 400 }
-      );
+      return Response.json({ error: "Program ID is required" }, { status: 400 });
     }
 
     const data = await request.json();
@@ -194,10 +186,7 @@ export async function PUT(request: NextRequest) {
     return Response.json(program);
   } catch (error) {
     console.error("Error updating program:", error);
-    return Response.json(
-      { error: "Failed to update program" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to update program" }, { status: 500 });
   }
 }
 
@@ -207,25 +196,16 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return Response.json(
-        { error: "Program ID is required" },
-        { status: 400 }
-      );
+      return Response.json({ error: "Program ID is required" }, { status: 400 });
     }
 
     await prisma.program.delete({
       where: { id },
     });
 
-    return Response.json(
-      { message: "Program deleted successfully" },
-      { status: 200 }
-    );
+    return Response.json({ message: "Program deleted successfully" }, { status: 200 });
   } catch (error) {
     console.error("Error deleting program:", error);
-    return Response.json(
-      { error: "Failed to delete program" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to delete program" }, { status: 500 });
   }
 }

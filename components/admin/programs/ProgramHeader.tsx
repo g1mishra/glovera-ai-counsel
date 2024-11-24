@@ -21,47 +21,15 @@ const ProgramHeader = () => {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsBulkModalOpen(true)}
-              className="btn-secondary"
-            >
+            <button onClick={() => setIsBulkModalOpen(true)} className="btn-secondary">
               <Upload className="w-4 h-4" />
               <span>Bulk Upload</span>
             </button>
-            <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="btn-primary"
-            >
+            <button onClick={() => setIsAddModalOpen(true)} className="btn-primary">
               <Plus className="w-4 h-4" />
               <span>Add Program</span>
             </button>
           </div>
-        </div>
-        <div className="grid grid-cols-4 gap-4">
-          <StatCard
-            title="Total Programs"
-            value="128"
-            trend="+12% from last month"
-            trendUp={true}
-          />
-          <StatCard
-            title="Active Programs"
-            value="98"
-            trend="+5% from last month"
-            trendUp={true}
-          />
-          <StatCard
-            title="Universities"
-            value="45"
-            trend="Same as last month"
-            trendUp={null}
-          />
-          <StatCard
-            title="Applications"
-            value="1,234"
-            trend="-3% from last month"
-            trendUp={false}
-          />
         </div>
       </div>
       <AddProgramModal
@@ -90,11 +58,7 @@ const StatCard = ({ title, value, trend, trendUp }: StatCardProps) => (
       <p className="text-2xl font-semibold text-gray-900">{value}</p>
       <span
         className={`ml-2 text-xs ${
-          trendUp === null
-            ? "text-gray-500"
-            : trendUp
-            ? "text-green-600"
-            : "text-red-600"
+          trendUp === null ? "text-gray-500" : trendUp ? "text-green-600" : "text-red-600"
         }`}
       >
         {trend}

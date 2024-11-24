@@ -1,61 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import {
-  Edit,
-  Trash2,
-  Loader2,
-  MapPin,
-  Calendar,
-  GraduationCap,
-  X,
-} from "lucide-react";
-import { getBasePath } from "@/utils/getBasePath";
 import { Program } from "@/types";
-import AddProgramModal from "./ProgramModals";
+import { getBasePath } from "@/utils/getBasePath";
+import { Edit, GraduationCap, Loader2, MapPin, Trash2, X } from "lucide-react";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
+import AddProgramModal from "./ProgramModals";
+import { useRouter } from "next/navigation";
 
-interface EnglishRequirements {
-  ielts?: string;
-  toefl?: string;
-  pte?: string;
-}
-
-interface ProgramsResponse {
-  programs: Program[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
-async function getPrograms(page: number = 1, limit: number = 10) {
-  try {
-    const path = `${getBasePath()}/api/programs?page=${page}&limit=${limit}`;
-    const response = await fetch(path, { cache: "no-store" });
-
-    if (!response.ok) {
-      console.error("Failed to fetch programs:", response.statusText);
-      return {
-        programs: [],
-        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
-      };
-    }
-
-    const data: ProgramsResponse = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error fetching programs:", error);
-    return {
-      programs: [],
-      pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
-    };
-  }
-}
-
-// Custom Alert Dialog Component
 const DeleteAlert = ({
   isOpen,
   onClose,
@@ -73,13 +25,10 @@ const DeleteAlert = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Overlay */}
       <div className="fixed inset-0 bg-black bg-opacity-25 transition-opacity" />
 
-      {/* Dialog */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div className="relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all w-full max-w-lg">
-          {/* Close button */}
           <button
             onClick={onClose}
             className="absolute right-4 top-4 text-gray-400 hover:text-gray-500"
@@ -87,20 +36,16 @@ const DeleteAlert = ({
             <X className="h-5 w-5" />
           </button>
 
-          {/* Content */}
           <div className="p-6">
             <div className="text-center">
-              <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-                Delete Program
-              </h3>
+              <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Delete Program</h3>
               <p className="text-sm text-gray-500">
-                Are you sure you want to delete "{program?.course_name}"? This
-                action cannot be undone.
+                Are you sure you want to delete "{program?.course_name}"? This action cannot be
+                undone.
               </p>
             </div>
           </div>
 
-          {/* Footer */}
           <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
             <button
               type="button"
@@ -132,18 +77,22 @@ const DeleteAlert = ({
   );
 };
 
-const ProgramList = ({ programs, setPrograms }: any) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pagination, setPagination] = useState({
-    total: 0,
-    page: 1,
-    limit: 10,
-    totalPages: 0,
-  });
+const ProgramList = ({
+  programs,
+  loading,
+  error,
+  setPrograms,
+}: {
+  programs: Program[];
+  loading: boolean;
+  error: string;
+  setPrograms: React.Dispatch<React.SetStateAction<Program[]>>;
+}) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
   const handleEditClick = (program: Program) => {
     setSelectedProgram(program);
@@ -162,12 +111,9 @@ const ProgramList = ({ programs, setPrograms }: any) => {
     const toastId = toast.loading("Deleting program...");
 
     try {
-      const response = await fetch(
-        `${getBasePath()}/api/programs?id=${selectedProgram.id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`${getBasePath()}/api/programs?id=${selectedProgram.id}`, {
+        method: "DELETE",
+      });
 
       if (!response.ok) {
         const error = await response.json();
@@ -175,18 +121,7 @@ const ProgramList = ({ programs, setPrograms }: any) => {
       }
 
       setPrograms((prev) => prev.filter((p) => p.id !== selectedProgram.id));
-
-      if (programs.length === 1 && currentPage > 1) {
-        setCurrentPage((prev) => prev - 1);
-      }
-
-      toast.success("Program deleted successfully", { id: toastId });
-
-      if (programs.length === 1 && currentPage > 1) {
-        setCurrentPage((prev) => prev - 1);
-      } else {
-        // await fetchPrograms();
-      }
+      router.refresh();
     } catch (error) {
       console.error("Error deleting program:", error);
       toast.error("Failed to delete program", { id: toastId });
@@ -202,7 +137,7 @@ const ProgramList = ({ programs, setPrograms }: any) => {
     setSelectedProgram(null);
     console.log("shouldRefetch", shouldRefetch);
     if (shouldRefetch) {
-      fetchPrograms();
+      router.refresh();
     }
   };
 
@@ -235,21 +170,11 @@ const ProgramList = ({ programs, setPrograms }: any) => {
                 <th className="text-left py-4 px-6 font-medium text-gray-500">
                   Course & University
                 </th>
-                <th className="text-left py-4 px-6 font-medium text-gray-500">
-                  Location
-                </th>
-                <th className="text-left py-4 px-6 font-medium text-gray-500">
-                  Duration & Fees
-                </th>
-                <th className="text-left py-4 px-6 font-medium text-gray-500">
-                  Intake & Deadline
-                </th>
-                <th className="text-left py-4 px-6 font-medium text-gray-500">
-                  Status
-                </th>
-                <th className="text-right py-4 px-6 font-medium text-gray-500">
-                  Actions
-                </th>
+                <th className="text-left py-4 px-6 font-medium text-gray-500">Location</th>
+                <th className="text-left py-4 px-6 font-medium text-gray-500">Duration & Fees</th>
+                <th className="text-left py-4 px-6 font-medium text-gray-500">Intake & Deadline</th>
+                <th className="text-left py-4 px-6 font-medium text-gray-500">Status</th>
+                <th className="text-right py-4 px-6 font-medium text-gray-500">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -258,9 +183,7 @@ const ProgramList = ({ programs, setPrograms }: any) => {
                   <td colSpan={6} className="py-8">
                     <div className="flex justify-center items-center">
                       <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-                      <span className="ml-2 text-gray-500">
-                        Loading programs...
-                      </span>
+                      <span className="ml-2 text-gray-500">Loading programs...</span>
                     </div>
                   </td>
                 </tr>
@@ -272,15 +195,10 @@ const ProgramList = ({ programs, setPrograms }: any) => {
                 </tr>
               ) : (
                 programs.map((program) => (
-                  <tr
-                    key={program.id}
-                    className="hover:bg-gray-50/50 transition-colors"
-                  >
+                  <tr key={program.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">
-                          {program.course_name}
-                        </span>
+                        <span className="font-medium text-gray-900">{program.course_name}</span>
                         <span className="text-sm text-gray-500 flex items-center mt-1">
                           <GraduationCap className="w-4 h-4 mr-1" />
                           {program.university_name}
@@ -295,19 +213,13 @@ const ProgramList = ({ programs, setPrograms }: any) => {
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex flex-col">
-                        <span className="text-gray-900">
-                          {program.duration}
-                        </span>
-                        <span className="text-sm text-gray-500">
-                          {program.tuition_fee}
-                        </span>
+                        <span className="text-gray-900">{program.duration}</span>
+                        <span className="text-sm text-gray-500">{program.tuition_fee}</span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex flex-col">
-                        <span className="text-gray-900">
-                          Intake: {program.intake_date}
-                        </span>
+                        <span className="text-gray-900">Intake: {program.intake_date}</span>
                         <span className="text-sm text-gray-500">
                           Deadline: {program.application_deadline}
                         </span>
@@ -316,17 +228,13 @@ const ProgramList = ({ programs, setPrograms }: any) => {
                     <td className="py-4 px-6">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          getStatusBadge(
-                            program.application_deadline,
-                            program.isActive === false
-                          ).classes
+                          getStatusBadge(program.application_deadline, program.isActive === false)
+                            .classes
                         }`}
                       >
                         {
-                          getStatusBadge(
-                            program.application_deadline,
-                            program.isActive === false
-                          ).text
+                          getStatusBadge(program.application_deadline, program.isActive === false)
+                            .text
                         }
                       </span>
                     </td>
@@ -351,30 +259,6 @@ const ProgramList = ({ programs, setPrograms }: any) => {
               )}
             </tbody>
           </table>
-
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
-            <div className="text-sm text-gray-500">
-              Showing {(currentPage - 1) * pagination.limit + 1} to{" "}
-              {Math.min(currentPage * pagination.limit, pagination.total)} of{" "}
-              {pagination.total} results
-            </div>
-            <div className="flex items-center space-x-2">
-              <button
-                className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </button>
-              <button
-                className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === pagination.totalPages}
-              >
-                Next
-              </button>
-            </div>
-          </div>
         </div>
         {isEditModalOpen && selectedProgram && (
           <AddProgramModal
