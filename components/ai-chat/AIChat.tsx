@@ -44,6 +44,7 @@ export default function AIChat({ user }: AIChatProps) {
   }, []);
 
   useEffect(() => {
+    if (!isAvatarReady) return;
     const sessionConversationId = sessionStorage.getItem("counseling-session-id");
 
     if (sessionConversationId) {
@@ -51,7 +52,7 @@ export default function AIChat({ user }: AIChatProps) {
     } else {
       startConversation();
     }
-  }, []);
+  }, [isAvatarReady]);
 
   const startNewConversation = () => {
     sessionStorage.clear();
@@ -111,6 +112,8 @@ export default function AIChat({ user }: AIChatProps) {
             content: data.data.initial_message,
           },
         ]);
+
+        await speakText(data.data.initial_message);
       } else {
         toast.error("Failed to start conversation");
       }
@@ -119,6 +122,44 @@ export default function AIChat({ user }: AIChatProps) {
       toast.error("Failed to start conversation");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const speakText = async (text: string) => {
+    if (!isAvatarReady) return;
+    if (!text) return;
+    if (headRef.current) {
+      try {
+        setIsSpeaking(true);
+
+        if (speakingTimeoutRef.current) {
+          clearTimeout(speakingTimeoutRef.current);
+        }
+
+        speakingTimeoutRef.current = setTimeout(() => {
+          setIsSpeaking(false);
+        }, 5000);
+
+        await headRef.current.speakText(text, null, (subtitles: any) => {
+          if (speakingTimeoutRef.current) {
+            clearTimeout(speakingTimeoutRef.current);
+          }
+
+          speakingTimeoutRef.current = setTimeout(() => {
+            setIsSpeaking(false);
+          }, 2000);
+
+          console.log("Subtitles:", subtitles);
+        });
+      } catch (error) {
+        console.error("Avatar speech error:", error);
+        setIsSpeaking(false);
+      } finally {
+        if (speakingTimeoutRef.current) {
+          clearTimeout(speakingTimeoutRef.current);
+        }
+        setIsSpeaking(false);
+      }
     }
   };
 
@@ -154,39 +195,7 @@ export default function AIChat({ user }: AIChatProps) {
           },
         ]);
 
-        if (headRef.current) {
-          try {
-            setIsSpeaking(true);
-
-            if (speakingTimeoutRef.current) {
-              clearTimeout(speakingTimeoutRef.current);
-            }
-
-            speakingTimeoutRef.current = setTimeout(() => {
-              setIsSpeaking(false);
-            }, 5000);
-
-            await headRef.current.speakText(data.data.ai_response, null, (subtitles: any) => {
-              if (speakingTimeoutRef.current) {
-                clearTimeout(speakingTimeoutRef.current);
-              }
-
-              speakingTimeoutRef.current = setTimeout(() => {
-                setIsSpeaking(false);
-              }, 2000);
-
-              console.log("Subtitles:", subtitles);
-            });
-          } catch (error) {
-            console.error("Avatar speech error:", error);
-            setIsSpeaking(false);
-          } finally {
-            if (speakingTimeoutRef.current) {
-              clearTimeout(speakingTimeoutRef.current);
-            }
-            setIsSpeaking(false);
-          }
-        }
+        await speakText(data.data.ai_response);
       } else {
         toast.error("Failed to get response");
       }
@@ -274,13 +283,7 @@ export default function AIChat({ user }: AIChatProps) {
           },
         ]);
 
-        if (headRef.current) {
-          try {
-            await headRef.current.speakText(data.data.ai_response);
-          } catch (error) {
-            console.error("Avatar speech error:", error);
-          }
-        }
+        await speakText(data.data.ai_response);
       } else {
         toast.error("Failed to process audio message");
       }
