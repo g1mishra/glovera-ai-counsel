@@ -1,17 +1,19 @@
 "use client";
 
-import { ProgramFilterParams, ProgramsMainProps } from "@/types";
-import { useEffect, useState } from "react";
-import Pagination from "../Pagination";
+import { ProgramsMainProps, ProgramFilterParams } from "@/types";
+import React, { useEffect, useState } from "react";
+import ProgramHeader from "./ProgramHeader";
 import ProgramList from "./ProgramList";
-import SearchBar from "./SearchBar";
+import SearchBar from "@/components/programs/SearchBar";
+import Pagination from "@/components/Pagination";
 
-const ProgramsMain = ({ programs: initialPrograms, pagination }: ProgramsMainProps) => {
+const ProgramsAdminView = ({ programs: initialPrograms, pagination }: ProgramsMainProps) => {
   const [programs, setPrograms] = useState(initialPrograms);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    console.log("initialPrograms", initialPrograms);
     setPrograms(initialPrograms);
   }, [initialPrograms]);
 
@@ -57,11 +59,12 @@ const ProgramsMain = ({ programs: initialPrograms, pagination }: ProgramsMainPro
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      <ProgramHeader />
       <SearchBar onSearch={handleSearch} onFilter={handleFilter} initialFilters={{}} />
-      <ProgramList programs={programs} loading={loading} error={error} />
+      <ProgramList programs={programs} loading={loading} error={error} setPrograms={setPrograms} />
       <Pagination
-        path="/programs"
+        path="/admin/programs"
         currentPage={pagination.page}
         totalPages={pagination.totalPages}
       />
@@ -69,4 +72,4 @@ const ProgramsMain = ({ programs: initialPrograms, pagination }: ProgramsMainPro
   );
 };
 
-export default ProgramsMain;
+export default ProgramsAdminView;

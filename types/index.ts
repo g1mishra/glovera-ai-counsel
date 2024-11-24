@@ -166,3 +166,36 @@ export interface UserProfile {
   target_intake?: string | null;
   budget_range?: string | null;
 }
+
+export interface Message {
+  role: "system" | "assistant" | "user";
+  content: string;
+  metadata?: Record<string, any>;
+  timestamp: Date;
+}
+
+export interface Conversation {
+  id: string;
+  userId: string;
+  title?: string;
+  messages: Message[];
+  createdAt: Date;
+  updatedAt: Date;
+  status: "active" | "archived" | "deleted";
+}
+
+export interface ProgramsMainProps {
+  programs: Array<Program>;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  path: string;
+}

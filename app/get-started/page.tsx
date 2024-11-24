@@ -16,8 +16,8 @@ export default async function GetStarted() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <main className="max-w-7xl mx-auto px-4 p-6 p-8">
+    <div className="bg-white"> 
+      <main className="max-w-7xl mx-auto px-4 p-6">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
             AI Video Counseling
