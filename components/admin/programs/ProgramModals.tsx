@@ -1,104 +1,158 @@
-"use client";
-
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   School,
   Calendar,
   DollarSign,
   Languages,
-  Trophy,
+  MapPin,
+  Building,
   GraduationCap,
-  Upload,
+  Briefcase,
+  Clock,
+  Loader2,
 } from "lucide-react";
 import Modal from "@/components/common/Modal";
+import { Program } from "@/types";
+import { getBasePath } from "@/utils/getBasePath";
+import toast from "react-hot-toast";
 
-interface ProgramModalsProps {
+type ProgramModalsProps = {
   isAddModalOpen: boolean;
-  isBulkModalOpen: boolean;
-  onCloseAddModal: () => void;
-  onCloseBulkModal: () => void;
-}
+  onCloseAddModal: (shouldRefetch?: boolean) => void;
+  mode?: "edit" | "add";
+  programData?: Program;
+};
 
-export const AddProgramModal: React.FC<
-  Omit<ProgramModalsProps, "isBulkModalOpen" | "onCloseBulkModal">
-> = ({ isAddModalOpen, onCloseAddModal }) => {
+const InputField = ({ label, icon: Icon, ...props }: any) => (
+  <div className="group">
+    <div className="flex items-center mb-1">
+      <Icon className="h-4 w-4 text-gray-500 mr-2" />
+      <label className="text-sm font-medium text-gray-700">{label}</label>
+    </div>
+    <input
+      {...props}
+      className="w-full h-11 px-4 rounded-lg border border-gray-200 bg-white shadow-sm transition-all focus:border-[#FF4B26] focus:ring-2 focus:ring-[#FF4B26]/20 hover:border-gray-300"
+    />
+  </div>
+);
+
+const SelectField = ({ label, icon: Icon, options, ...props }: any) => (
+  <div className="group">
+    <div className="flex items-center mb-1">
+      <Icon className="h-4 w-4 text-gray-500 mr-2" />
+      <label className="text-sm font-medium text-gray-700">{label}</label>
+    </div>
+    <select
+      {...props}
+      className="w-full h-11 px-4 rounded-lg border border-gray-200 bg-white shadow-sm transition-all focus:border-[#FF4B26] focus:ring-2 focus:ring-[#FF4B26]/20 hover:border-gray-300 appearance-none"
+    >
+      {options.map((option: any) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  </div>
+);
+
+export const AddProgramModal = ({
+  isAddModalOpen,
+  onCloseAddModal,
+  mode = "add",
+  programData,
+}: ProgramModalsProps) => {
   const [formData, setFormData] = useState({
-    program_name: "",
+    course_name: "",
     degree_type: "",
     duration: "",
-    program_start_date: "",
     tuition_fee: "",
-    eligibility_criteria: {
-      minimum_gpa: "",
-      language_proficiency: "",
+    university_name: "",
+    university_location: "",
+    intake_date: "",
+    application_deadline: "",
+    english_requirements: {
+      ielts: "",
+      toefl: "",
+      pte: "",
     },
+    min_gpa: "",
+    work_experience: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (mode === "edit" && programData) {
+      setFormData(programData);
+    }
+  }, [mode, programData]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(formData);
-    onCloseAddModal();
+    setIsSubmitting(true);
+    const toastId = toast.loading(
+      mode === "edit" ? "Updating program..." : "Adding program..."
+    );
+
+    try {
+      const url =
+        mode === "edit"
+          ? `${getBasePath()}/api/programs?id=${programData?.id}`
+          : `${getBasePath()}/api/programs`;
+
+      const response = await fetch(url, {
+        method: mode === "edit" ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || `Failed to ${mode} program`);
+      }
+
+      const program = await response.json();
+      toast.success(
+        mode === "edit"
+          ? "Program updated successfully"
+          : "New program added successfully",
+        { id: toastId }
+      );
+
+      onCloseAddModal(true);
+    } catch (error) {
+      console.error(`Error ${mode}ing program:`, error);
+      toast.error(
+        mode === "edit" ? "Failed to update program" : "Failed to add program",
+        { id: toastId }
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-
-  const InputField = ({ label, icon: Icon, ...props }: any) => (
-    <div className="group relative">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Icon className="h-5 w-5 text-gray-400 group-focus-within:text-[#FF4B26] transition-colors" />
-        </div>
-        <input
-          {...props}
-          className="w-full h-12 pl-10 pr-4 rounded-xl border border-gray-200 bg-white shadow-sm transition-all focus:border-[#FF4B26] focus:ring-2 focus:ring-[#FF4B26]/20 hover:border-gray-300"
-        />
-      </div>
-    </div>
-  );
-
-  const SelectField = ({ label, icon: Icon, options, ...props }: any) => (
-    <div className="group relative">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {label}
-      </label>
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Icon className="h-5 w-5 text-gray-400 group-focus-within:text-[#FF4B26] transition-colors" />
-        </div>
-        <select
-          {...props}
-          className="w-full h-12 pl-10 pr-4 rounded-xl border border-gray-200 bg-white shadow-sm transition-all focus:border-[#FF4B26] focus:ring-2 focus:ring-[#FF4B26]/20 hover:border-gray-300 appearance-none"
-        >
-          {options.map((option: any) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
-  );
 
   return (
     <Modal
       isOpen={isAddModalOpen}
-      onClose={onCloseAddModal}
+      onClose={() => onCloseAddModal(false)}
       title="Add New Program"
       size="xl"
     >
-      <form onSubmit={handleSubmit} className="p-2">
-        <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+      <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <div className="grid grid-cols-2 gap-6">
           <InputField
+            label="Course Name"
             icon={School}
             type="text"
-            placeholder="Enter program name"
-            value={formData.program_name}
+            placeholder="Enter course name"
+            value={formData.course_name}
             onChange={(e: any) =>
-              setFormData({ ...formData, program_name: e.target.value })
+              setFormData({ ...formData, course_name: e.target.value })
             }
           />
           <SelectField
+            label="Degree Type"
             icon={GraduationCap}
             value={formData.degree_type}
             onChange={(e: any) =>
@@ -112,6 +166,7 @@ export const AddProgramModal: React.FC<
             ]}
           />
           <InputField
+            label="Duration"
             icon={Calendar}
             type="text"
             placeholder="Enter course duration"
@@ -121,59 +176,164 @@ export const AddProgramModal: React.FC<
             }
           />
           <InputField
+            label="Tuition Fee"
             icon={DollarSign}
             type="text"
-            placeholder="Enter tution fee"
+            placeholder="Enter tuition fee"
             value={formData.tuition_fee}
             onChange={(e: any) =>
               setFormData({ ...formData, tuition_fee: e.target.value })
             }
           />
           <InputField
-            icon={Trophy}
+            label="University Name"
+            icon={Building}
             type="text"
-            placeholder="Enter minimum GPA"
-            value={formData.eligibility_criteria.minimum_gpa}
+            placeholder="Enter university name"
+            value={formData.university_name}
             onChange={(e: any) =>
-              setFormData({
-                ...formData,
-                eligibility_criteria: {
-                  ...formData.eligibility_criteria,
-                  minimum_gpa: e.target.value,
-                },
-              })
+              setFormData({ ...formData, university_name: e.target.value })
             }
           />
           <InputField
-            icon={Languages}
+            label="University Location"
+            icon={MapPin}
             type="text"
-            placeholder="Enter language proficiency, IELTS, TOEFL, etc."
-            value={formData.eligibility_criteria.language_proficiency}
+            placeholder="Enter university location"
+            value={formData.university_location}
             onChange={(e: any) =>
-              setFormData({
-                ...formData,
-                eligibility_criteria: {
-                  ...formData.eligibility_criteria,
-                  language_proficiency: e.target.value,
-                },
-              })
+              setFormData({ ...formData, university_location: e.target.value })
             }
           />
         </div>
 
-        <div className="flex justify-end gap-3 pt-8 mt-4 border-t border-gray-100">
+        <div className="grid grid-cols-2 gap-6">
+          <InputField
+            label="Intake Date"
+            icon={Calendar}
+            type="date"
+            value={formData.intake_date}
+            onChange={(e: any) =>
+              setFormData({ ...formData, intake_date: e.target.value })
+            }
+          />
+          <InputField
+            label="Application Deadline"
+            icon={Clock}
+            type="date"
+            value={formData.application_deadline}
+            onChange={(e: any) =>
+              setFormData({ ...formData, application_deadline: e.target.value })
+            }
+          />
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center">
+            <Languages className="h-4 w-4 text-gray-500 mr-2" />
+            <h3 className="text-sm font-medium text-gray-700">
+              Language Requirements
+            </h3>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <InputField
+              label="IELTS Score"
+              icon={Languages}
+              type="text"
+              placeholder="Enter IELTS score"
+              value={formData.english_requirements.ielts}
+              onChange={(e: any) =>
+                setFormData({
+                  ...formData,
+                  english_requirements: {
+                    ...formData.english_requirements,
+                    ielts: e.target.value,
+                  },
+                })
+              }
+            />
+            <InputField
+              label="TOEFL Score"
+              icon={Languages}
+              type="text"
+              placeholder="Enter TOEFL score"
+              value={formData.english_requirements.toefl}
+              onChange={(e: any) =>
+                setFormData({
+                  ...formData,
+                  english_requirements: {
+                    ...formData.english_requirements,
+                    toefl: e.target.value,
+                  },
+                })
+              }
+            />
+            <InputField
+              label="PTE Score"
+              icon={Languages}
+              type="text"
+              placeholder="Enter PTE score"
+              value={formData.english_requirements.pte}
+              onChange={(e: any) =>
+                setFormData({
+                  ...formData,
+                  english_requirements: {
+                    ...formData.english_requirements,
+                    pte: e.target.value,
+                  },
+                })
+              }
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-6">
+          <InputField
+            label="Minimum GPA"
+            icon={GraduationCap}
+            type="text"
+            placeholder="Enter minimum GPA required"
+            value={formData.min_gpa}
+            onChange={(e: any) =>
+              setFormData({ ...formData, min_gpa: e.target.value })
+            }
+          />
+          <InputField
+            label="Work Experience"
+            icon={Briefcase}
+            type="text"
+            placeholder="Enter required work experience"
+            value={formData.work_experience}
+            onChange={(e: any) =>
+              setFormData({ ...formData, work_experience: e.target.value })
+            }
+          />
+        </div>
+
+        <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-100">
           <button
             type="button"
-            onClick={onCloseAddModal}
-            className="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors font-medium"
+            onClick={() => onCloseAddModal(false)}
+            className="px-6 py-2.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors font-medium"
+            disabled={isSubmitting}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-6 py-3 rounded-xl bg-[#FF4B26] text-white hover:bg-[#E63E1C] transition-colors font-medium shadow-lg shadow-[#FF4B26]/25"
+            className="px-6 py-2.5 rounded-lg bg-[#FF4B26] text-white hover:bg-[#E63E1C] transition-colors font-medium shadow-lg shadow-[#FF4B26]/25 disabled:opacity-50"
+            disabled={isSubmitting}
           >
-            Add Program
+            {isSubmitting ? (
+              <div className="flex items-center">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {mode === "edit" ? "Updating..." : "Adding..."}
+              </div>
+            ) : mode === "edit" ? (
+              "Update Program"
+            ) : (
+              "Add Program"
+            )}
           </button>
         </div>
       </form>
@@ -181,94 +341,4 @@ export const AddProgramModal: React.FC<
   );
 };
 
-export const BulkUploadModal: React.FC<
-  Omit<ProgramModalsProps, "isAddModalOpen" | "onCloseAddModal">
-> = ({ isBulkModalOpen, onCloseBulkModal }) => {
-  const [file, setFile] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    const droppedFile = e.dataTransfer.files[0];
-    if (
-      droppedFile?.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-      droppedFile?.type === "text/csv"
-    ) {
-      setFile(droppedFile);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-    }
-  };
-
-  return (
-    <Modal
-      isOpen={isBulkModalOpen}
-      onClose={onCloseBulkModal}
-      title="Bulk Upload Programs"
-      size="md"
-    >
-      <div className="space-y-6">
-        <div
-          className={`border-2 border-dashed rounded-lg p-8 text-center ${
-            isDragging ? "border-[#FF4B26] bg-[#FFF5F3]" : "border-gray-300"
-          }`}
-          onDragOver={(e: any) => {
-            e.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={handleDrop}
-        >
-          <Upload className="w-10 h-10 text-gray-400 mx-auto mb-4" />
-
-          <div className="space-y-2">
-            <p className="text-gray-600">
-              {file
-                ? `Selected file: ${file.name}`
-                : "Drop your Excel or CSV file here, or click to browse"}
-            </p>
-            <input
-              type="file"
-              className="hidden"
-              accept=".xlsx,.csv"
-              onChange={handleFileChange}
-              id="file-upload"
-            />
-            <label
-              htmlFor="file-upload"
-              className="btn-secondary inline-block cursor-pointer"
-            >
-              Browse Files
-            </label>
-          </div>
-        </div>
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">
-            Need a template?
-          </h4>
-          <p className="text-sm text-gray-600 mb-3">
-            Download our Excel template to ensure your data is formatted
-            correctly.
-          </p>
-          <button className="btn-secondary">Download Template</button>
-        </div>
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button onClick={onCloseBulkModal} className="btn-secondary">
-            Cancel
-          </button>
-          <button className="btn-primary" disabled={!file}>
-            Upload Programs
-          </button>
-        </div>
-      </div>
-    </Modal>
-  );
-};
+export default AddProgramModal;

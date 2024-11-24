@@ -75,6 +75,7 @@ model Program {
     program_url          String?
     intake_date          String
     application_deadline String
+    isActive            Boolean  @default(true) 
 
     // Eligibility
     english_requirements Json? // { ielts: string, toefl: string, pte: string }

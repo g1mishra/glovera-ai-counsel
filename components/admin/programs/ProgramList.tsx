@@ -1,183 +1,401 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import {
+  Edit,
+  Trash2,
+  Loader2,
+  MapPin,
+  Calendar,
+  GraduationCap,
+  X,
+} from "lucide-react";
+import { getBasePath } from "@/utils/getBasePath";
 import { Program } from "@/types";
-import { Edit, Trash2 } from "lucide-react";
+import AddProgramModal from "./ProgramModals";
+import toast from "react-hot-toast";
 
-const ProgramList = () => {
-  const programs: Partial<Program>[] = [
-    {
-      _id: "1",
-      program_name: "Master of Computer Science",
-      degree_type: "Master's Degree",
-      duration: "2 years",
-      program_start_date: "Sep 2024",
-      eligibility_criteria: {
-        minimum_gpa: "3.0",
-        subjects_required: ["Computer Science", "Mathematics"],
-        language_proficiency: "IELTS 6.5",
-      },
-      tuition_fee: "$25,000/year",
-    },
-    {
-      _id: "2",
-      program_name: "Bachelor of Business Administration",
-      degree_type: "Bachelor's Degree",
-      duration: "4 years",
-      program_start_date: "Sep 2024",
-      eligibility_criteria: {
-        minimum_gpa: "2.5",
-        subjects_required: ["Mathematics", "English"],
-        language_proficiency: "IELTS 6.0",
-      },
-      tuition_fee: "$20,000/year",
-    },
-    {
-      _id: "3",
-      program_name: "PhD in Data Science",
-      degree_type: "Doctorate",
-      duration: "3-4 years",
-      program_start_date: "Jan 2025",
-      eligibility_criteria: {
-        minimum_gpa: "3.5",
-        subjects_required: ["Statistics", "Computer Science"],
-        language_proficiency: "IELTS 7.0",
-      },
-      tuition_fee: "$30,000/year",
-    },
-    {
-      _id: "4",
-      program_name: "Master of Business Analytics",
-      degree_type: "Master's Degree",
-      duration: "1.5 years",
-      program_start_date: "Jan 2025",
-      eligibility_criteria: {
-        minimum_gpa: "3.0",
-        subjects_required: ["Mathematics", "Statistics"],
-        language_proficiency: "IELTS 6.5",
-      },
-      tuition_fee: "$28,000/year",
-    },
-    {
-      _id: "5",
-      program_name: "Bachelor of Computer Engineering",
-      degree_type: "Bachelor's Degree",
-      duration: "4 years",
-      program_start_date: "Sep 2024",
-      eligibility_criteria: {
-        minimum_gpa: "2.8",
-        subjects_required: ["Physics", "Mathematics"],
-        language_proficiency: "IELTS 6.0",
-      },
-      tuition_fee: "$22,000/year",
-    },
-  ];
+interface EnglishRequirements {
+  ielts?: string;
+  toefl?: string;
+  pte?: string;
+}
 
-  const getStatusBadge = (index: number) => {
-    // Alternate between different statuses for demonstration
-    const statuses = [
-      { text: "Active", classes: "bg-green-100 text-green-800" },
-      { text: "Inactive", classes: "bg-red-100 text-red-800" },
-      { text: "Draft", classes: "bg-yellow-100 text-yellow-800" },
-      { text: "Archived", classes: "bg-gray-100 text-gray-800" },
-    ];
-    return statuses[index % statuses.length];
+interface ProgramsResponse {
+  programs: Program[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
   };
+}
+
+async function getPrograms(page: number = 1, limit: number = 10) {
+  try {
+    const path = `${getBasePath()}/api/programs?page=${page}&limit=${limit}`;
+    const response = await fetch(path, { cache: "no-store" });
+
+    if (!response.ok) {
+      console.error("Failed to fetch programs:", response.statusText);
+      return {
+        programs: [],
+        pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+      };
+    }
+
+    const data: ProgramsResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching programs:", error);
+    return {
+      programs: [],
+      pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+    };
+  }
+}
+
+// Custom Alert Dialog Component
+const DeleteAlert = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  program,
+  isDeleting,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  program: Program | null;
+  isDeleting: boolean;
+}) => {
+  if (!isOpen) return null;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="text-left py-4 px-6 font-medium text-gray-500">
-                PROGRAM NAME
-              </th>
-              <th className="text-left py-4 px-6 font-medium text-gray-500">
-                DEGREE TYPE
-              </th>
-              <th className="text-left py-4 px-6 font-medium text-gray-500">
-                DURATION
-              </th>
-              <th className="text-left py-4 px-6 font-medium text-gray-500">
-                START DATE
-              </th>
-              <th className="text-left py-4 px-6 font-medium text-gray-500">
-                STATUS
-              </th>
-              <th className="text-right py-4 px-6 font-medium text-gray-500">
-                ACTIONS
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {programs.map((program, index) => (
-              <tr
-                key={program._id}
-                className="hover:bg-gray-50/50 transition-colors"
-              >
-                <td className="py-4 px-6">
-                  <div className="flex flex-col">
-                    <span className="font-medium text-gray-900">
-                      {program.program_name}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      Tuition: {program.tuition_fee}
-                    </span>
-                  </div>
-                </td>
-                <td className="py-4 px-6 text-gray-500">
-                  {program.degree_type}
-                </td>
-                <td className="py-4 px-6 text-gray-500">{program.duration}</td>
-                <td className="py-4 px-6 text-gray-500">
-                  {program.program_start_date}
-                </td>
-                <td className="py-4 px-6">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      getStatusBadge(index).classes
-                    }`}
-                  >
-                    {getStatusBadge(index).text}
-                  </span>
-                </td>
-                <td className="py-4 px-6">
-                  <div className="flex items-center justify-end space-x-2">
-                    <button className="action-btn text-gray-600 hover:bg-gray-50">
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button className="action-btn text-red-600 hover:bg-red-50">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Overlay */}
+      <div className="fixed inset-0 bg-black bg-opacity-25 transition-opacity" />
 
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
-          <div className="text-sm text-gray-500">
-            Showing 1 to 5 of 5 results
+      {/* Dialog */}
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="relative transform overflow-hidden rounded-lg bg-white shadow-xl transition-all w-full max-w-lg">
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute right-4 top-4 text-gray-400 hover:text-gray-500"
+          >
+            <X className="h-5 w-5" />
+          </button>
+
+          {/* Content */}
+          <div className="p-6">
+            <div className="text-center">
+              <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
+                Delete Program
+              </h3>
+              <p className="text-sm text-gray-500">
+                Are you sure you want to delete "{program?.course_name}"? This
+                action cannot be undone.
+              </p>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
+
+          {/* Footer */}
+          <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
             <button
-              className="btn-secondary px-3 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled
+              type="button"
+              className="inline-flex justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50"
+              onClick={onClose}
+              disabled={isDeleting}
             >
-              Previous
+              Cancel
             </button>
             <button
-              className="btn-secondary px-3 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled
+              type="button"
+              className="inline-flex justify-center rounded-lg border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
+              onClick={onConfirm}
+              disabled={isDeleting}
             >
-              Next
+              {isDeleting ? (
+                <div className="flex items-center">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </div>
+              ) : (
+                "Delete Program"
+              )}
             </button>
           </div>
         </div>
       </div>
     </div>
+  );
+};
+
+const ProgramList = ({ programs, setPrograms }: any) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+  });
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleEditClick = (program: Program) => {
+    setSelectedProgram(program);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteClick = (program: Program) => {
+    setSelectedProgram(program);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedProgram) return;
+
+    setIsDeleting(true);
+    const toastId = toast.loading("Deleting program...");
+
+    try {
+      const response = await fetch(
+        `${getBasePath()}/api/programs?id=${selectedProgram.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to delete program");
+      }
+
+      setPrograms((prev) => prev.filter((p) => p.id !== selectedProgram.id));
+
+      if (programs.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
+
+      toast.success("Program deleted successfully", { id: toastId });
+
+      if (programs.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      } else {
+        // await fetchPrograms();
+      }
+    } catch (error) {
+      console.error("Error deleting program:", error);
+      toast.error("Failed to delete program", { id: toastId });
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setSelectedProgram(null);
+    }
+  };
+
+  const handleModalClose = (shouldRefetch?: boolean) => {
+    setIsEditModalOpen(false);
+    setSelectedProgram(null);
+    console.log("shouldRefetch", shouldRefetch);
+    if (shouldRefetch) {
+      fetchPrograms();
+    }
+  };
+
+  const getStatusBadge = (deadline: string, notActive = false) => {
+    const today = new Date();
+    const deadlineDate = new Date(deadline);
+
+    if (notActive || deadlineDate < today) {
+      return { text: "In-Active", classes: "bg-red-100 text-red-800" };
+    }
+
+    const daysUntilDeadline = Math.ceil(
+      (deadlineDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysUntilDeadline <= 30) {
+      return { text: "Closing Soon", classes: "bg-yellow-100 text-yellow-800" };
+    }
+
+    return { text: "Active", classes: "bg-green-100 text-green-800" };
+  };
+
+  return (
+    <>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-4 px-6 font-medium text-gray-500">
+                  Course & University
+                </th>
+                <th className="text-left py-4 px-6 font-medium text-gray-500">
+                  Location
+                </th>
+                <th className="text-left py-4 px-6 font-medium text-gray-500">
+                  Duration & Fees
+                </th>
+                <th className="text-left py-4 px-6 font-medium text-gray-500">
+                  Intake & Deadline
+                </th>
+                <th className="text-left py-4 px-6 font-medium text-gray-500">
+                  Status
+                </th>
+                <th className="text-right py-4 px-6 font-medium text-gray-500">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="py-8">
+                    <div className="flex justify-center items-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                      <span className="ml-2 text-gray-500">
+                        Loading programs...
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ) : programs.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-gray-500">
+                    No programs found
+                  </td>
+                </tr>
+              ) : (
+                programs.map((program) => (
+                  <tr
+                    key={program.id}
+                    className="hover:bg-gray-50/50 transition-colors"
+                  >
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900">
+                          {program.course_name}
+                        </span>
+                        <span className="text-sm text-gray-500 flex items-center mt-1">
+                          <GraduationCap className="w-4 h-4 mr-1" />
+                          {program.university_name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center text-gray-500">
+                        <MapPin className="w-4 h-4 mr-1" />
+                        {program.university_location}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col">
+                        <span className="text-gray-900">
+                          {program.duration}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {program.tuition_fee}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col">
+                        <span className="text-gray-900">
+                          Intake: {program.intake_date}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          Deadline: {program.application_deadline}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          getStatusBadge(
+                            program.application_deadline,
+                            program.isActive === false
+                          ).classes
+                        }`}
+                      >
+                        {
+                          getStatusBadge(
+                            program.application_deadline,
+                            program.isActive === false
+                          ).text
+                        }
+                      </span>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                          onClick={() => handleEditClick(program)}
+                        >
+                          <Edit className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <button
+                          className="p-1 hover:bg-red-50 rounded-full transition-colors"
+                          onClick={() => handleDeleteClick(program)}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-600" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+            <div className="text-sm text-gray-500">
+              Showing {(currentPage - 1) * pagination.limit + 1} to{" "}
+              {Math.min(currentPage * pagination.limit, pagination.total)} of{" "}
+              {pagination.total} results
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+              <button
+                className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage === pagination.totalPages}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+        {isEditModalOpen && selectedProgram && (
+          <AddProgramModal
+            isAddModalOpen={isEditModalOpen}
+            onCloseAddModal={handleModalClose}
+            mode="edit"
+            programData={selectedProgram}
+          />
+        )}
+      </div>
+      <DeleteAlert
+        isOpen={isDeleteDialogOpen}
+        onClose={() => {
+          setIsDeleteDialogOpen(false);
+          setSelectedProgram(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        program={selectedProgram}
+        isDeleting={isDeleting}
+      />
+    </>
   );
 };
 

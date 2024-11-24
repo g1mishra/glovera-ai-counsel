@@ -52,10 +52,13 @@ export async function GET(request: NextRequest) {
         });
       } catch (error) {
         console.error("Error fetching program:", error);
-        return new Response(JSON.stringify({ error: "Failed to fetch program" }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "Failed to fetch program" }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
     } else {
       try {
@@ -86,10 +89,13 @@ export async function GET(request: NextRequest) {
         );
       } catch (error) {
         console.error("Error fetching programs:", error);
-        return new Response(JSON.stringify({ error: "Failed to fetch programs" }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "Failed to fetch programs" }),
+          {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
       }
     }
   } catch (error) {
@@ -98,5 +104,128 @@ export async function GET(request: NextRequest) {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const data = await request.json();
+
+    const requiredFields = [
+      "course_name",
+      "degree_type",
+      "tuition_fee",
+      "duration",
+      "university_name",
+      "university_location",
+      "intake_date",
+      "application_deadline",
+    ];
+
+    const missingFields = requiredFields.filter((field) => !data[field]);
+    if (missingFields.length > 0) {
+      return Response.json(
+        {
+          error: "Missing required fields",
+          fields: missingFields,
+        },
+        { status: 400 }
+      );
+    }
+
+    const program = await prisma.program.create({
+      data: {
+        course_name: data.course_name,
+        degree_type: data.degree_type,
+        tuition_fee: data.tuition_fee,
+        duration: data.duration,
+        university_name: data.university_name,
+        university_location: data.university_location,
+        intake_date: data.intake_date,
+        application_deadline: data.application_deadline,
+        english_requirements: data.english_requirements || null,
+        min_gpa: data.min_gpa || null,
+        work_experience: data.work_experience || null,
+        isActive: true,
+      },
+    });
+
+    return Response.json(program, { status: 201 });
+  } catch (error) {
+    console.error("Error creating program:", error);
+    return Response.json(
+      { error: "Failed to create program" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return Response.json(
+        { error: "Program ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const data = await request.json();
+
+    const program = await prisma.program.update({
+      where: { id },
+      data: {
+        course_name: data.course_name,
+        degree_type: data.degree_type,
+        tuition_fee: data.tuition_fee,
+        duration: data.duration,
+        university_name: data.university_name,
+        university_location: data.university_location,
+        intake_date: data.intake_date,
+        application_deadline: data.application_deadline,
+        english_requirements: data.english_requirements || null,
+        min_gpa: data.min_gpa || null,
+        work_experience: data.work_experience || null,
+      },
+    });
+
+    return Response.json(program);
+  } catch (error) {
+    console.error("Error updating program:", error);
+    return Response.json(
+      { error: "Failed to update program" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return Response.json(
+        { error: "Program ID is required" },
+        { status: 400 }
+      );
+    }
+
+    await prisma.program.delete({
+      where: { id },
+    });
+
+    return Response.json(
+      { message: "Program deleted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error deleting program:", error);
+    return Response.json(
+      { error: "Failed to delete program" },
+      { status: 500 }
+    );
   }
 }

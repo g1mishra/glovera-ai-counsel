@@ -10,6 +10,7 @@ export interface Program {
   program_url: string;
   intake_date: string;
   application_deadline: string;
+  isActive?: boolean;
   english_requirements: {
     ielts: string;
     toefl: string;
