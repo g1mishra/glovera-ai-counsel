@@ -17,7 +17,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "University Program Management",
+  title: "Glovera AI",
   description: "Find and apply to university programs worldwide",
 };
 
