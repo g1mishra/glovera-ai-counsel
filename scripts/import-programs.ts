@@ -19,15 +19,15 @@ function validateAndTransformData(data: any) {
     throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
   }
 
-  let english_requirements = data.english_requirments
+  let english_requirments = data.english_requirments
     ? JSON.parse(data.english_requirments)
     : null;
 
-  english_requirements = Object.keys(english_requirements).reduce(
+  english_requirments = Object.keys(english_requirments).reduce(
     (acc, key) => {
-      if (english_requirements[key]) {
+      if (english_requirments[key]) {
         // @ts-ignore
-        acc[key] = String(english_requirements[key]);
+        acc[key] = english_requirments[key];
       }
       return acc;
     },
@@ -42,9 +42,9 @@ function validateAndTransformData(data: any) {
     university_location: data.university_location,
     global_rank: data.global_rank || null,
     program_url: data.program_url || null,
-    intake_date: data.start_date,
-    application_deadline: data.apply_date,
-    english_requirements: english_requirements,
+    start_date: data.start_date,
+    apply_date: data.apply_date,
+    english_requirments: english_requirments,
     min_gpa: data.min_gpa || null,
     work_experience: data.work_experience || null,
   };

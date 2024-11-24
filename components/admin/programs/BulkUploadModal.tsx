@@ -28,8 +28,7 @@ export const BulkUploadModal = ({
 
     const droppedFile = e.dataTransfer.files[0];
     if (
-      droppedFile?.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      droppedFile?.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
       droppedFile?.type === "text/csv"
     ) {
       setFile(droppedFile);
@@ -64,45 +63,32 @@ export const BulkUploadModal = ({
           });
 
           // Remove header row and empty rows
-          const rows = jsonData
-            .slice(1)
-            .filter((row: any) => row.some((cell: any) => cell !== ""));
+          const rows = jsonData.slice(1).filter((row: any) => row.some((cell: any) => cell !== ""));
 
           // Get headers (convert to lowercase and trim)
-          const headers = jsonData[0].map((header: string) =>
-            header.toLowerCase().trim()
-          );
+          const headers = jsonData[0].map((header: string) => header.toLowerCase().trim());
 
           // Transform data to match API schema
           const transformedData = rows.map((row: any) => {
             const program: any = {
               course_name: row[headers.indexOf("course_name")] || "",
               degree_type: row[headers.indexOf("degree_type")] || "",
-              tuition_fee:
-                row[headers.indexOf("tuition_fee")]?.toString() || "",
+              tuition_fee: row[headers.indexOf("tuition_fee")]?.toString() || "",
               duration: row[headers.indexOf("duration")]?.toString() || "",
               university_name: row[headers.indexOf("university_name")] || "",
-              university_location:
-                row[headers.indexOf("university_location")] || "",
-              intake_date: row[headers.indexOf("intake_date")] || "",
-              application_deadline:
-                row[headers.indexOf("application_deadline")] || "",
-              english_requirements: {
-                ielts: row[headers.indexOf("ielts")]?.toString() || "",
-                toefl: row[headers.indexOf("toefl")]?.toString() || "",
-                pte: row[headers.indexOf("pte")]?.toString() || "",
+              university_location: row[headers.indexOf("university_location")] || "",
+              start_date: row[headers.indexOf("start_date")] || "",
+              apply_date: row[headers.indexOf("apply_date")] || "",
+              english_requirments: {
+                ielts: row[headers.indexOf("ielts")] || null,
+                toefl: row[headers.indexOf("toefl")] || null,
+                pte: row[headers.indexOf("pte")] || null,
               },
-              min_gpa: row[headers.indexOf("min_gpa")]?.toString() || "",
-              work_experience:
-                row[headers.indexOf("work_experience")]?.toString() || "",
+              min_gpa: row[headers.indexOf("min_gpa")] || null,
+              work_experience: row[headers.indexOf("work_experience")] || null,
             };
 
             // Add optional fields if they exist
-            const globalRankIndex = headers.indexOf("global_rank");
-            if (globalRankIndex !== -1) {
-              program.global_rank = row[globalRankIndex]?.toString() || "";
-            }
-
             const programUrlIndex = headers.indexOf("program_url");
             if (programUrlIndex !== -1) {
               program.program_url = row[programUrlIndex] || "";
@@ -114,9 +100,7 @@ export const BulkUploadModal = ({
           resolve(transformedData);
         } catch (error) {
           console.error("Error parsing file:", error);
-          reject(
-            new Error("Failed to parse file. Please check the file format.")
-          );
+          reject(new Error("Failed to parse file. Please check the file format."));
         }
       };
 
@@ -140,9 +124,9 @@ export const BulkUploadModal = ({
         duration: program.duration?.toString(),
         university_name: program.university_name,
         university_location: program.university_location,
-        intake_date: program.intake_date,
-        application_deadline: program.application_deadline,
-        english_requirements: {
+        start_date: program.start_date,
+        apply_date: program.apply_date,
+        english_requirments: {
           ielts: program.ielts?.toString() || "",
           toefl: program.toefl?.toString() || "",
           pte: program.pte?.toString() || "",
@@ -233,8 +217,8 @@ export const BulkUploadModal = ({
         university_location: "City, Country",
         global_rank: "100",
         program_url: "https://example.com",
-        intake_date: "2024-09-01",
-        application_deadline: "2024-08-01",
+        start_date: "2024-09-01",
+        apply_date: "2024-08-01",
         ielts: "6.5",
         toefl: "90",
         pte: "60",
@@ -286,22 +270,16 @@ export const BulkUploadModal = ({
               onChange={handleFileChange}
               id="file-upload"
             />
-            <label
-              htmlFor="file-upload"
-              className="btn-secondary inline-block cursor-pointer"
-            >
+            <label htmlFor="file-upload" className="btn-secondary inline-block cursor-pointer">
               Browse Files
             </label>
           </div>
         </div>
 
         <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">
-            Need a template?
-          </h4>
+          <h4 className="text-sm font-medium text-gray-900 mb-2">Need a template?</h4>
           <p className="text-sm text-gray-600 mb-3">
-            Download our Excel template to ensure your data is formatted
-            correctly.
+            Download our Excel template to ensure your data is formatted correctly.
           </p>
           <button
             className="btn-secondary flex items-center gap-2"
@@ -313,11 +291,7 @@ export const BulkUploadModal = ({
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button
-            onClick={onCloseBulkModal}
-            className="btn-secondary"
-            disabled={isUploading}
-          >
+          <button onClick={onCloseBulkModal} className="btn-secondary" disabled={isUploading}>
             Cancel
           </button>
           <button

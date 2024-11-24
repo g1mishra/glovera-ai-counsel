@@ -63,31 +63,29 @@ model Profile {
 }
 
 model Program {
-    id                   String  @id @default(auto()) @map("_id") @db.ObjectId
+    id                   String              @id @default(auto()) @map("_id") @db.ObjectId
     course_name          String
     degree_type          String
-    tuition_fee          String
+    tuition_fee          Float
+    tuition_fee_currency String              @default("INR")
     duration             String
     university_name      String
     university_location  String
-    global_rank          String?
     program_url          String?
-    intake_date          String
-    application_deadline String
-    isActive            Boolean  @default(true) 
+    english_requirments  EnglishRequirements
+    min_gpa              Float?
+    work_experience      Int?
+    start_date           String
+    apply_date           String
+    createdAt            DateTime            @default(now())
+    updatedAt            DateTime            @updatedAt
+    isActive             Boolean             @default(true)
+}
 
-    // Eligibility
-    english_requirements Json? // { ielts: string, toefl: string, pte: string }
-    min_gpa              String?
-    work_experience      String?
-
-    // Metadata
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@unique([course_name, university_name, intake_date])
-    @@index([course_name, degree_type, university_name])
-    @@index([intake_date, application_deadline])
+type EnglishRequirements {
+    ielts Float?
+    toefl Float?
+    pte   Float?
 }
 
 type Message {

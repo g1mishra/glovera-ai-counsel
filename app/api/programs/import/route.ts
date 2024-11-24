@@ -14,13 +14,13 @@ const ProgramSchema = z.object({
   university_location: z.string().min(1),
   global_rank: z.string().optional(),
   program_url: z.string().url().optional(),
-  intake_date: z.string().min(1),
-  application_deadline: z.string().min(1),
-  english_requirements: z
+  start_date: z.string().min(1),
+  apply_date: z.string().min(1),
+  english_requirments: z
     .object({
-      ielts: z.string().optional(),
-      toefl: z.string().optional(),
-      pte: z.string().optional(),
+      ielts: z.number().optional(),
+      toefl: z.number().optional(),
+      pte: z.number().optional(),
     })
     .optional(),
   min_gpa: z.string().optional(),
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
       const result = await prisma.program.createMany({
         data: validatedPrograms.map((program) => ({
           ...program,
-          english_requirements: program.english_requirements || null,
+          english_requirments: program.english_requirments || null,
         })),
       });
 
