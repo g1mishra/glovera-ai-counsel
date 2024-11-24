@@ -1,21 +1,21 @@
 "use client";
 
+import { Filter, Search, Target, TrendingUp } from "lucide-react";
 import React from "react";
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
 } from "recharts";
-import { Search, Target, TrendingUp, Filter } from "lucide-react";
 
 const QueryPatterns = () => {
   // Sample data for various charts

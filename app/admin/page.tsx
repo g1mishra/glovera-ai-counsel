@@ -1,25 +1,15 @@
 "use client";
-import React from "react";
 import {
-  Users,
-  GraduationCap,
-  MessageSquare,
-  Calendar,
+  ArrowDownRight,
   ArrowRight,
   ArrowUpRight,
-  ArrowDownRight,
-  Globe,
-  School,
+  GraduationCap,
+  MessageSquare,
+  Settings,
+  Users
 } from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import React from "react";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 const AdminDashboard = () => {
   // Sample data for degree types distribution
@@ -30,7 +20,6 @@ const AdminDashboard = () => {
     { type: "Diploma", count: 32 },
   ];
 
-  // Sample recent programs
   const recentPrograms = [
     {
       course_name: "Computer Science",
@@ -60,7 +49,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
@@ -70,7 +58,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Quick Stats */}
       <div className="grid grid-cols-4 gap-4">
         <QuickStatCard
           title="Total Programs"
@@ -93,18 +80,9 @@ const AdminDashboard = () => {
           trendUp={true}
           icon={MessageSquare}
         />
-        <QuickStatCard
-          title="Upcoming Deadlines"
-          value="12"
-          trend="Same"
-          trendUp={null}
-          icon={Calendar}
-        />
       </div>
 
-      {/* Charts and Recent Activity */}
       <div className="grid grid-cols-3 gap-6">
-        {/* Program Distribution */}
         <div className="col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-semibold text-gray-900">
@@ -124,12 +102,9 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Recent Programs */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Recent Programs
-            </h2>
+            <h2 className="text-lg font-semibold text-gray-900">Recent Programs</h2>
             <button className="text-sm text-[#FF4B26] hover:text-[#E63E1C] flex items-center gap-1">
               View All
               <ArrowRight className="w-4 h-4" />
@@ -142,13 +117,9 @@ const AdminDashboard = () => {
                 className="flex items-start justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <div className="space-y-1">
-                  <p className="font-medium text-gray-900">
-                    {program.course_name}
-                  </p>
+                  <p className="font-medium text-gray-900">{program.course_name}</p>
                   <p className="text-sm text-gray-500">{program.degree_type}</p>
-                  <p className="text-sm text-gray-500">
-                    {program.university_name}
-                  </p>
+                  <p className="text-sm text-gray-500">{program.university_name}</p>
                 </div>
                 <div className="text-right">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -164,7 +135,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="grid grid-cols-3 gap-4">
         <QuickActionCard
           title="Program Management"
@@ -173,15 +143,15 @@ const AdminDashboard = () => {
           icon={GraduationCap}
         />
         <QuickActionCard
-          title="User Management"
-          description="Manage student and admin accounts, view profiles and verification status."
-          link="/admin/users"
-          icon={Users}
+          title="Settings"
+          description="Manage settings and preferences."
+          link="/admin/settings"
+          icon={Settings}
         />
         <QuickActionCard
-          title="Conversation Monitor"
+          title="Analytics"
           description="Monitor active conversations and user engagement analytics."
-          link="/admin/conversations"
+          link="/admin/analytics"
           icon={MessageSquare}
         />
       </div>
@@ -197,13 +167,7 @@ interface QuickStatCardProps {
   icon: React.ElementType;
 }
 
-const QuickStatCard = ({
-  title,
-  value,
-  trend,
-  trendUp,
-  icon: Icon,
-}: QuickStatCardProps) => (
+const QuickStatCard = ({ title, value, trend, trendUp, icon: Icon }: QuickStatCardProps) => (
   <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
     <div className="flex items-center justify-between">
       <div className="p-2 bg-[#FFF5F3] rounded-lg">
@@ -215,11 +179,7 @@ const QuickStatCard = ({
             trendUp ? "text-green-600" : "text-red-600"
           }`}
         >
-          {trendUp ? (
-            <ArrowUpRight className="w-4 h-4" />
-          ) : (
-            <ArrowDownRight className="w-4 h-4" />
-          )}
+          {trendUp ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
           {trend}
         </span>
       )}
@@ -238,12 +198,7 @@ interface QuickActionCardProps {
   icon: React.ElementType;
 }
 
-const QuickActionCard = ({
-  title,
-  description,
-  link,
-  icon: Icon,
-}: QuickActionCardProps) => (
+const QuickActionCard = ({ title, description, link, icon: Icon }: QuickActionCardProps) => (
   <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
     <div className="p-2 bg-[#FFF5F3] rounded-lg w-fit">
       <Icon className="w-5 h-5 text-[#FF4B26]" />
