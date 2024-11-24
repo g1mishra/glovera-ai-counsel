@@ -2,187 +2,147 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/authOptions";
 import { prisma } from "@/lib/prisma";
-import { z } from "zod";
-import { Prisma } from "@prisma/client";
 
-const ProgramSchema = z.object({
-  course_name: z.string().min(1),
-  degree_type: z.string().min(1),
-  tuition_fee: z.string().min(1),
-  duration: z.string().min(1),
-  university_name: z.string().min(1),
-  university_location: z.string().min(1),
-  global_rank: z.string().optional(),
-  program_url: z.string().url().optional(),
-  intake_date: z.string().min(1),
-  application_deadline: z.string().min(1),
-  english_requirements: z
-    .object({
-      ielts: z.string().optional(),
-      toefl: z.string().optional(),
-      pte: z.string().optional(),
-    })
-    .optional(),
-  min_gpa: z.string().optional(),
-  work_experience: z.string().optional(),
-});
+type EnglishRequirements = {
+  ielts: number; // Required, non-null
+  toefl: number; // Required, non-null
+  pte: number; // Required, non-null
+};
+
+type ProgramInput = {
+  course_name: string;
+  degree_type: string;
+  tuition_fee: number;
+  duration: string;
+  university_name: string;
+  university_location: string;
+  start_date: string;
+  apply_date: string;
+  english_requirments: EnglishRequirements; // Required, non-null
+  min_gpa?: number | null;
+  work_experience?: number | null;
+  global_rank?: string | null;
+  program_url?: string | null;
+};
 
 export async function POST(request: NextRequest) {
   try {
+    // Auth check
     const session = await getServerSession(authOptions);
     if (!session?.user || session.user.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const data = await request.json();
-
-    if (!Array.isArray(data)) {
+    // Parse request body
+    let programs: ProgramInput[];
+    try {
+      const bodyText = await request.text();
+      const data = JSON.parse(bodyText);
+      programs = Array.isArray(data) ? data : [data];
+    } catch (error) {
+      console.error("JSON parsing error:", error);
       return NextResponse.json(
         {
           success: false,
-          error: "Invalid input: expected an array of programs",
+          error: "Invalid JSON format",
+          details:
+            error instanceof Error ? error.message : "Unknown parsing error",
         },
         { status: 400 }
       );
     }
 
-    // First pass: Validate schema and check for duplicates within the upload
-    const validatedPrograms = [];
-    const errors = [];
-    const seenPrograms = new Set();
+    // Validate and transform data
+    const transformedPrograms = programs.map((program) => {
+      // Ensure english_requirments values are numbers and non-null
+      const englishRequirements = {
+        ielts: Number(program.english_requirments?.ielts || 0),
+        toefl: Number(program.english_requirments?.toefl || 0),
+        pte: Number(program.english_requirments?.pte || 0),
+      };
 
-    for (let i = 0; i < data.length; i++) {
-      try {
-        const program = ProgramSchema.parse(data[i]);
-
-        // Create a unique key for the program
-        const programKey = `${program.course_name}-${program.university_name}-${program.degree_type}`;
-
-        if (seenPrograms.has(programKey)) {
-          errors.push({
-            row: i + 1,
-            error: "Duplicate program within the upload",
-            details: {
-              course_name: program.course_name,
-              university_name: program.university_name,
-              degree_type: program.degree_type,
-            },
-          });
-          continue;
-        }
-
-        seenPrograms.add(programKey);
-        validatedPrograms.push(program);
-      } catch (error: any) {
-        errors.push({
-          row: i + 1,
-          error: error.errors || error.message,
-        });
+      // Validate english requirements
+      if (
+        isNaN(englishRequirements.ielts) ||
+        isNaN(englishRequirements.toefl) ||
+        isNaN(englishRequirements.pte)
+      ) {
+        throw new Error(
+          `Invalid english requirements for program: ${program.course_name}`
+        );
       }
-    }
 
-    if (errors.length > 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          errors,
-        },
-        { status: 400 }
-      );
-    }
-
-    // Optimized database check for duplicates using a single query
-    const existingPrograms = await prisma.program.findMany({
-      where: {
-        OR: validatedPrograms.map((program) => ({
-          AND: [
-            { course_name: program.course_name },
-            { university_name: program.university_name },
-            { degree_type: program.degree_type },
-          ],
-        })),
-      },
-      select: {
-        course_name: true,
-        university_name: true,
-        degree_type: true,
-      },
+      return {
+        course_name: program.course_name,
+        degree_type: program.degree_type,
+        tuition_fee: Number(program.tuition_fee),
+        tuition_fee_currency: "INR",
+        duration: program.duration,
+        university_name: program.university_name,
+        university_location: program.university_location,
+        program_url: program.program_url || null,
+        english_requirments: englishRequirements, // Always providing non-null values
+        min_gpa: program.min_gpa ? Number(program.min_gpa) : null,
+        work_experience: program.work_experience
+          ? Number(program.work_experience)
+          : null,
+        start_date: program.start_date,
+        apply_date: program.apply_date,
+        isActive: true,
+      };
     });
 
-    // Create a Set of existing program keys for O(1) lookup
-    const existingProgramKeys = new Set(
-      existingPrograms.map(
-        (prog) =>
-          `${prog.course_name}-${prog.university_name}-${prog.degree_type}`
-      )
+    // Debug log
+    console.log(
+      "First program data:",
+      JSON.stringify(transformedPrograms[0], null, 2)
     );
 
-    // Check for duplicates
-    const duplicates = validatedPrograms
-      .map((program, index) => {
-        const key = `${program.course_name}-${program.university_name}-${program.degree_type}`;
-        if (existingProgramKeys.has(key)) {
-          return {
-            row: index + 1,
-            error: "Program already exists in database",
-            details: {
-              course_name: program.course_name,
-              university_name: program.university_name,
-              degree_type: program.degree_type,
-            },
-          };
-        }
-        return null;
-      })
-      .filter(Boolean);
+    // Validate all programs have required fields
+    const invalidPrograms = transformedPrograms.filter(
+      (program) =>
+        !program.english_requirments.ielts ||
+        !program.english_requirments.toefl ||
+        !program.english_requirments.pte
+    );
 
-    if (duplicates.length > 0) {
+    if (invalidPrograms.length > 0) {
       return NextResponse.json(
         {
           success: false,
-          error: "Duplicate programs found",
-          duplicates,
+          error: "Validation Error",
+          details: "All programs must have non-null english requirement scores",
+          invalidPrograms: invalidPrograms.map((p) => p.course_name),
         },
-        { status: 409 }
+        { status: 400 }
       );
     }
 
-    // If no duplicates, proceed with insertion
-    try {
-      const result = await prisma.program.createMany({
-        data: validatedPrograms.map((program) => ({
-          ...program,
-          english_requirements: program.english_requirements || null,
-        })),
-      });
-
-      return NextResponse.json({
-        success: true,
-        imported: result.count,
-      });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === "P2002") {
-          return NextResponse.json(
-            {
-              success: false,
-              error: "Duplicate entries detected",
-              details: "Some programs already exist in the database",
-            },
-            { status: 409 }
-          );
+    // Create programs one by one
+    const created = await Promise.all(
+      transformedPrograms.map(async (program) => {
+        try {
+          return await prisma.program.create({
+            data: program,
+          });
+        } catch (error) {
+          console.error("Error creating program:", program.course_name, error);
+          throw error; // Re-throw to handle it in the outer catch
         }
-      }
-      throw error;
-    }
-  } catch (error) {
+      })
+    );
+
+    return NextResponse.json({
+      success: true,
+      imported: created.length,
+    });
+  } catch (error: any) {
     console.error("Program import error:", error);
     return NextResponse.json(
       {
         success: false,
         error: "Failed to import programs",
-        details:
-          error instanceof Error ? error.message : "Unknown error occurred",
+        details: error?.message || "An unexpected error occurred",
       },
       { status: 500 }
     );

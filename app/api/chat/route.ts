@@ -8,7 +8,6 @@ const FAST_API_BASE_URL = process.env.FAST_API_BASE_URL;
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
 
-
   if (!FAST_API_BASE_URL) {
     return NextResponse.json({ error: "FAST_API_BASE_URL is not set" }, { status: 500 });
   }
@@ -19,7 +18,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { action, message, conversationId } = body;
+    const { action, message, conversationId, audio_base64 } = body;
 
     if (action === "start") {
       const response = await fetch(`${FAST_API_BASE_URL}/start_conversation/`, {
@@ -37,16 +36,25 @@ export async function POST(request: Request) {
     }
 
     if (action === "continue") {
+      const params: Record<string, string> = {
+        user_id: session.user.id,
+        conversation_id: conversationId,
+      };
+
+      if (message) {
+        params.message = message;
+      }
+      if (audio_base64) {
+        params.audio_base64 = audio_base64;
+        params.message = "";
+      }
+
       const response = await fetch(`${FAST_API_BASE_URL}/continue_conversation/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: new URLSearchParams({
-          user_id: session.user.id,
-          conversation_id: conversationId,
-          message: message,
-        }),
+        body: new URLSearchParams(params),
       });
 
       const data = await response.json();

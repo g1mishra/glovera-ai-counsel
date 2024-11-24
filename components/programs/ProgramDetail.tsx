@@ -42,7 +42,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ program }) => {
             </div>
             <div className="flex items-center">
               <Calendar className="w-5 h-5 mr-2" />
-              <span>Starts {program.intake_date}</span>
+              <span>Starts {program.start_date}</span>
             </div>
           </div>
           <Link
@@ -80,14 +80,14 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ program }) => {
               </div>
             </div>
           )}
-          {Object.keys(program?.english_requirements || {}).length > 0 &&
-            Object.keys(program?.english_requirements || {}).map((key) => (
+          {Object.keys(program?.english_requirments || {}).length > 0 &&
+            Object.keys(program?.english_requirments || {}).map((key) => (
               <div className="flex items-start" key={key}>
                 <CheckCircle className="w-5 h-5 text-[#FF4B26] mr-3 mt-1" />
                 <div>
                   <h3 className="font-medium">{key}</h3>
                   <p className="text-gray-600">
-                    {program.english_requirements[key as keyof typeof program.english_requirements]}
+                    {program.english_requirments[key as keyof typeof program.english_requirments]}
                   </p>
                 </div>
               </div>

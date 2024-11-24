@@ -219,21 +219,21 @@ const ProgramList = ({
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex flex-col">
-                        <span className="text-gray-900">Intake: {program.intake_date}</span>
+                        <span className="text-gray-900">Intake: {program.start_date}</span>
                         <span className="text-sm text-gray-500">
-                          Deadline: {program.application_deadline}
+                          Deadline: {program.apply_date}
                         </span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          getStatusBadge(program.application_deadline, program.isActive === false)
+                          getStatusBadge(program.apply_date, program.isActive === false)
                             .classes
                         }`}
                       >
                         {
-                          getStatusBadge(program.application_deadline, program.isActive === false)
+                          getStatusBadge(program.apply_date, program.isActive === false)
                             .text
                         }
                       </span>

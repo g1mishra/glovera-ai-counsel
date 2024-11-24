@@ -35,7 +35,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
           </div>
           <div className="flex items-center text-gray-600">
             <Calendar className="w-4 h-4 mr-2" />
-            <span>Starts {program.intake_date}</span>
+            <span>Starts {program.start_date}</span>
           </div>
           <div className="flex items-center text-gray-600">
             <DollarSign className="w-4 h-4 mr-2" />
@@ -47,7 +47,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
           <h4 className="font-medium text-gray-900">Key Requirements:</h4>
           <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
             {program.min_gpa && <li>Minimum GPA: {program.min_gpa}</li>}
-            {program.english_requirements.ielts && <li>{program.english_requirements.ielts}</li>}
+            {program.english_requirments.ielts && <li>{program.english_requirments.ielts}</li>}
             {program.work_experience && <li>{program.work_experience} work experience</li>}
           </ul>
         </div>
