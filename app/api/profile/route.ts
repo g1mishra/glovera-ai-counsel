@@ -17,7 +17,7 @@ const ProfileSchema = z.object({
   }),
 
   work_experience_years: z.string(),
-  technical_skills: z.array(z.string()).min(1, "Select at least one skill"),
+  technical_skills: z.array(z.string()).optional(),
   preferred_study_countries: z.array(z.string()).min(1, "Select at least one country"),
   target_intake: z.string().min(1, "Target intake is required"),
   budget_range: z.string().min(1, "Budget range is required"),
