@@ -1,12 +1,24 @@
 "use client";
 
 import { User } from "@/types";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { MessageCircle, Video, Mic, Send, PlusCircle, Square } from "lucide-react";
-import { toast } from "react-hot-toast";
+import {
+  convertDecimalToPoint,
+  replaceFullStopsWithCommas,
+} from "@/utils/utils";
+import {
+  MessageCircle,
+  Mic,
+  PlusCircle,
+  Send,
+  Square
+} from "lucide-react";
 import dynamic from "next/dynamic";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
 
-const AvatarComponent = dynamic(() => import("./AvatarComponent"), { ssr: false });
+const AvatarComponent = dynamic(() => import("./AvatarComponent"), {
+  ssr: false,
+});
 interface AIChatProps {
   user: User;
 }
@@ -45,7 +57,9 @@ export default function AIChat({ user }: AIChatProps) {
 
   useEffect(() => {
     if (!isAvatarReady) return;
-    const sessionConversationId = sessionStorage.getItem("counseling-session-id");
+    const sessionConversationId = sessionStorage.getItem(
+      "counseling-session-id"
+    );
 
     if (sessionConversationId) {
       loadExistingConversation(sessionConversationId);
@@ -66,9 +80,12 @@ export default function AIChat({ user }: AIChatProps) {
   const loadExistingConversation = async (sessionConversationId: string) => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/chat?conversationId=${sessionConversationId}`, {
-        method: "GET",
-      });
+      const response = await fetch(
+        `/api/chat?conversationId=${sessionConversationId}`,
+        {
+          method: "GET",
+        }
+      );
 
       const data = await response.json();
 
@@ -128,6 +145,10 @@ export default function AIChat({ user }: AIChatProps) {
   const speakText = async (text: string) => {
     if (!isAvatarReady) return;
     if (!text) return;
+
+    const txt1 = convertDecimalToPoint(text);
+    const finalText = replaceFullStopsWithCommas(txt1);
+
     if (headRef.current) {
       try {
         setIsSpeaking(true);
@@ -140,7 +161,7 @@ export default function AIChat({ user }: AIChatProps) {
           setIsSpeaking(false);
         }, 5000);
 
-        await headRef.current.speakText(text, null, (subtitles: any) => {
+        await headRef.current.speakText(finalText, null, (subtitles: any) => {
           if (speakingTimeoutRef.current) {
             clearTimeout(speakingTimeoutRef.current);
           }
@@ -153,11 +174,6 @@ export default function AIChat({ user }: AIChatProps) {
         });
       } catch (error) {
         console.error("Avatar speech error:", error);
-        setIsSpeaking(false);
-      } finally {
-        if (speakingTimeoutRef.current) {
-          clearTimeout(speakingTimeoutRef.current);
-        }
         setIsSpeaking(false);
       }
     }
@@ -316,10 +332,12 @@ export default function AIChat({ user }: AIChatProps) {
       <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow p-6 min-h-[300px] sm:min-h-[500px]">
         <div className="flex flex-col items-center justify-center h-full">
           {avatarLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-900/10 rounded-lg z-10">
+            <div className="fixed inset-0 flex items-center justify-center bg-[#FF4B26]/10 rounded-lg z-50">
               <div className="text-center">
                 <div className="w-16 h-16 border-4 border-[#FF4B26] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-700">Loading Avatar... {loadingProgress}%</p>
+                <p className="text-gray-700">
+                  Loading Avatar... {loadingProgress}%
+                </p>
               </div>
             </div>
           )}
@@ -376,7 +394,9 @@ export default function AIChat({ user }: AIChatProps) {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex ${
+                  message.type === "user" ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
                   className={`max-w-[80%] rounded-lg px-4 py-2 ${
@@ -391,7 +411,9 @@ export default function AIChat({ user }: AIChatProps) {
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-gray-50 text-gray-800 rounded-lg p-4 shadow">Typing...</div>
+                <div className="bg-gray-50 text-gray-800 rounded-lg p-4 shadow">
+                  Typing...
+                </div>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -413,13 +435,19 @@ export default function AIChat({ user }: AIChatProps) {
                 : "Type your message..."
             }
             className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FF4B26] focus:ring-2 focus:ring-[#FF4B26]/20 transition-all disabled:opacity-50 disabled:bg-gray-50"
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
+            onKeyDown={(e) =>
+              e.key === "Enter" && !e.shiftKey && handleSendMessage()
+            }
             disabled={!isAvatarReady || isLoading || isRecording || isSpeaking}
           />
           <button
             onClick={handleSendMessage}
             disabled={
-              !isAvatarReady || !inputMessage.trim() || isLoading || isRecording || isSpeaking
+              !isAvatarReady ||
+              !inputMessage.trim() ||
+              isLoading ||
+              isRecording ||
+              isSpeaking
             }
             className="p-2 bg-[#FF4B26] text-white rounded-lg hover:bg-[#E63E1C] transition-colors disabled:opacity-50 disabled:bg-gray-400 shadow-[0_4px_12px_rgb(255,75,38,0.24)]"
           >

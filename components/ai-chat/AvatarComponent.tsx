@@ -8,6 +8,8 @@ interface AvatarComponentProps {
   onLoadingProgress: (progress: number) => void;
 }
 
+const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_TTS_API_KEY;
+
 export default function AvatarComponent({
   onAvatarReady,
   onLoadingProgress,
@@ -28,8 +30,10 @@ export default function AvatarComponent({
       importMap.type = "importmap";
       importMap.textContent = JSON.stringify({
         imports: {
-          three: "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js/+esm",
-          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
+          three:
+            "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js/+esm",
+          "three/addons/":
+            "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/",
           talkinghead:
             "https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@1.3/modules/talkinghead.mjs",
         },
@@ -68,8 +72,9 @@ export default function AvatarComponent({
         }
 
         head = new TalkingHead(avatarRef.current, {
-          ttsEndpoint: "https://eu-texttospeech.googleapis.com/v1beta1/text:synthesize",
-          ttsApikey: process.env.NEXT_PUBLIC_GOOGLE_TTS_API_KEY,
+          ttsEndpoint:
+            "https://eu-texttospeech.googleapis.com/v1beta1/text:synthesize",
+          ttsApikey: API_KEY,
           lipsyncModules: ["en", "fi"],
           cameraView: "upper",
           gltfUrl: "https://models.readyplayer.me/64bfa15f0e72c63d7c3934a6.glb",
