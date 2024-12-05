@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/authOptions";
 import { isProfileComplete } from "@/utils/profile";
 import AIChat from "@/components/ai-chat/AIChat";
+import { AVATARS } from "@/components/ai-chat/avatars/constants/avatars";
 
 export default async function GetStarted() {
   const session = await getServerSession(authOptions);
@@ -16,7 +17,7 @@ export default async function GetStarted() {
   }
 
   return (
-    <div className="bg-white"> 
+    <div className="bg-white">
       <main className="max-w-7xl mx-auto px-4 p-6">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">
@@ -26,7 +27,7 @@ export default async function GetStarted() {
             Connect instantly with our AI counselor for personalized guidance
           </p>
         </div>
-        <AIChat user={session.user} />
+        <AIChat initialAvatarId={AVATARS[0].id} />
       </main>
     </div>
   );
