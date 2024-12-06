@@ -9,10 +9,7 @@ export async function PUT(request: Request) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { error: "Unauthorized access" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     }
 
     const { email, name, currentPassword, newPassword } = await request.json();
@@ -25,18 +22,11 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // If changing password, verify current password
     if (currentPassword && newPassword) {
-      const isPasswordValid = await bcrypt.compare(
-        currentPassword,
-        user.password as string
-      );
+      const isPasswordValid = await bcrypt.compare(currentPassword, user.password as string);
 
       if (!isPasswordValid) {
-        return NextResponse.json(
-          { error: "Current password is incorrect" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
       }
 
       const hashedNewPassword = await bcrypt.hash(newPassword, 10);
@@ -49,7 +39,6 @@ export async function PUT(request: Request) {
       });
     }
 
-    // Update name and email
     const updatedUser = await prisma.user.update({
       where: { email: session.user.email },
       data: {
@@ -67,9 +56,6 @@ export async function PUT(request: Request) {
     });
   } catch (error) {
     console.error("Settings update error:", error);
-    return NextResponse.json(
-      { error: "Error updating profile" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Error updating profile" }, { status: 500 });
   }
 }

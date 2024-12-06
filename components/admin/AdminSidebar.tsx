@@ -36,11 +36,6 @@ const AdminSidebar = () => {
       icon: BarChart,
     },
     {
-      title: "Student Engagement",
-      href: "/admin/analytics/engagement",
-      icon: Users,
-    },
-    {
       title: "Query Patterns",
       href: "/admin/analytics/queries",
       icon: BookOpen,

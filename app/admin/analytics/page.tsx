@@ -1,13 +1,7 @@
 "use client";
 
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  MessageSquare,
-  TrendingUp,
-  Users,
-} from "lucide-react";
-import React from "react";
+import { ArrowDownRight, ArrowUpRight, MessageSquare, TrendingUp, Users } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import {
   CartesianGrid,
   Cell,
@@ -18,105 +12,117 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
-  YAxis
+  YAxis,
 } from "recharts";
 
 const AnalyticsOverview = () => {
-  // Sample data
-  const applicationTrends = [
-    { month: "Jan", applications: 65, conversions: 45 },
-    { month: "Feb", applications: 85, conversions: 55 },
-    { month: "Mar", applications: 95, conversions: 65 },
-    { month: "Apr", applications: 75, conversions: 52 },
-    { month: "May", applications: 110, conversions: 78 },
-    { month: "Jun", applications: 125, conversions: 88 },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState({
+    conversations: {
+      rate: 0,
+      trend: "0%",
+      total: 0,
+      active: 0,
+    },
+    users: {
+      total: 0,
+      trend: "0%",
+    },
+  });
+  const [trends, setTrends] = useState([]);
+  const [distributions, setDistributions] = useState({
+    conversationStatus: [],
+    userRoles: [],
+  });
 
-  const programDistribution = [
-    { name: "Master's", value: 45 },
-    { name: "Bachelor's", value: 30 },
-    { name: "PhD", value: 15 },
-    { name: "Diploma", value: 10 },
-  ];
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
+
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/admin/analytics");
+      const data = await response.json();
+
+      if (data.success) {
+        setAnalyticsData(data.analytics);
+        setTrends(data.trends);
+        setDistributions(data.distributions);
+      }
+    } catch (error) {
+      console.error("Failed to fetch analytics:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const COLORS = ["#FF4B26", "#FF8C61", "#FFB69E", "#FFE1D6"];
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF4B26]"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Analytics Overview</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Comprehensive insights about your platform's performance and user
-          engagement.
+          Platform performance and user engagement metrics
         </p>
       </div>
 
-      {/* Quick Stats */}
       <div className="grid grid-cols-3 gap-4">
         <QuickStatCard
-          title="Conversion Rate"
-          value="68.5%"
-          trend="+5.2%"
-          trendUp={true}
-          description="From total applications"
+          title="Conversation Rate"
+          value={`${analyticsData.conversations.rate}%`}
+          trend={analyticsData.conversations.trend}
+          trendUp={!analyticsData.conversations.trend.startsWith("-")}
+          description="Active conversation rate"
           icon={TrendingUp}
         />
         <QuickStatCard
-          title="Active Users"
-          value="2,845"
-          trend="+12.3%"
-          trendUp={true}
-          description="In last 30 days"
+          title="Total Users"
+          value={analyticsData.users.total.toLocaleString()}
+          trend={analyticsData.users.trend}
+          trendUp={!analyticsData.users.trend.startsWith("-")}
+          description="User growth rate"
           icon={Users}
         />
         <QuickStatCard
-          title="Avg. Response Time"
-          value="2.4s"
-          trend="-0.5s"
-          trendUp={true}
-          description="System response time"
+          title="Active Conversations"
+          value={analyticsData.conversations.active.toLocaleString()}
+          trend={analyticsData.conversations.trend}
+          trendUp={!analyticsData.conversations.trend.startsWith("-")}
+          description="Ongoing conversations"
           icon={MessageSquare}
         />
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-2 gap-6">
-        {/* Application & Conversion Trends */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Application & Conversion Trends
-              </h2>
-              <p className="text-sm text-gray-500">
-                Monthly application and conversion rates
-              </p>
+              <h2 className="text-lg font-semibold text-gray-900">Conversation Trends</h2>
+              <p className="text-sm text-gray-500">Monthly conversation statistics</p>
             </div>
-            <select className="filter-select">
-              <option>Last 6 months</option>
-              <option>Last year</option>
-            </select>
           </div>
+
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={applicationTrends}>
+              <LineChart data={trends}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
                 <Line
                   type="monotone"
-                  dataKey="applications"
+                  dataKey="conversations"
                   stroke="#FF4B26"
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="conversions"
-                  stroke="#FF8C61"
                   strokeWidth={2}
                   dot={{ r: 4 }}
                   activeDot={{ r: 6 }}
@@ -126,54 +132,34 @@ const AnalyticsOverview = () => {
           </div>
         </div>
 
-        {/* Program Distribution */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Program Distribution
-              </h2>
-              <p className="text-sm text-gray-500">
-                Applications by program type
-              </p>
+              <h2 className="text-lg font-semibold text-gray-900">Status Distribution</h2>
+              <p className="text-sm text-gray-500">Conversations by status</p>
             </div>
           </div>
+
           <div className="h-[300px] flex items-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={programDistribution}
+                  data={distributions.conversationStatus}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name} ${(percent * 100).toFixed(0)}%`
-                  }
+                  label={({ name, value, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   outerRadius={100}
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {programDistribution.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
+                  {distributions.conversationStatus.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
-          </div>
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            {programDistribution.map((item, index) => (
-              <div key={item.name} className="flex items-center space-x-2">
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: COLORS[index] }}
-                />
-                <span className="text-sm text-gray-600">{item.name}</span>
-              </div>
-            ))}
           </div>
         </div>
       </div>
@@ -208,11 +194,7 @@ const QuickStatCard = ({
           trendUp ? "text-green-600" : "text-red-600"
         }`}
       >
-        {trendUp ? (
-          <ArrowUpRight className="w-4 h-4" />
-        ) : (
-          <ArrowDownRight className="w-4 h-4" />
-        )}
+        {trendUp ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
         {trend}
       </span>
     </div>
