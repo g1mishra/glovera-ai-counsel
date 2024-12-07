@@ -4,9 +4,9 @@ import { authOptions } from "../../auth/authOptions";
 import { prisma } from "@/lib/prisma";
 
 type EnglishRequirements = {
-  ielts: number; // Required, non-null
-  toefl: number; // Required, non-null
-  pte: number; // Required, non-null
+  ielts: number;
+  toefl: number;
+  pte: number;
 };
 
 type ProgramInput = {
@@ -18,7 +18,7 @@ type ProgramInput = {
   university_location: string;
   start_date: string;
   apply_date: string;
-  english_requirments: EnglishRequirements; // Required, non-null
+  english_requirments: EnglishRequirements;
   min_gpa?: number | null;
   work_experience?: number | null;
   global_rank?: string | null;
@@ -27,13 +27,11 @@ type ProgramInput = {
 
 export async function POST(request: NextRequest) {
   try {
-    // Auth check
     const session = await getServerSession(authOptions);
     if (!session?.user || session.user.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Parse request body
     let programs: ProgramInput[];
     try {
       const bodyText = await request.text();
@@ -45,8 +43,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: "Invalid JSON format",
-          details:
-            error instanceof Error ? error.message : "Unknown parsing error",
+          details: error instanceof Error ? error.message : "Unknown parsing error",
         },
         { status: 400 }
       );
@@ -67,9 +64,7 @@ export async function POST(request: NextRequest) {
         isNaN(englishRequirements.toefl) ||
         isNaN(englishRequirements.pte)
       ) {
-        throw new Error(
-          `Invalid english requirements for program: ${program.course_name}`
-        );
+        throw new Error(`Invalid english requirements for program: ${program.course_name}`);
       }
 
       return {
@@ -83,9 +78,7 @@ export async function POST(request: NextRequest) {
         program_url: program.program_url || null,
         english_requirments: englishRequirements, // Always providing non-null values
         min_gpa: program.min_gpa ? Number(program.min_gpa) : null,
-        work_experience: program.work_experience
-          ? Number(program.work_experience)
-          : null,
+        work_experience: program.work_experience ? Number(program.work_experience) : null,
         start_date: program.start_date,
         apply_date: program.apply_date,
         isActive: true,
@@ -93,10 +86,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Debug log
-    console.log(
-      "First program data:",
-      JSON.stringify(transformedPrograms[0], null, 2)
-    );
+    console.log("First program data:", JSON.stringify(transformedPrograms[0], null, 2));
 
     // Validate all programs have required fields
     const invalidPrograms = transformedPrograms.filter(

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { MessageCircle, Send, PlusCircle, Settings } from "lucide-react";
 import { toast } from "react-hot-toast";
+import MessageButtons from "./MessageButtons";
 import StreamingAvatar, {
   AvatarQuality,
   StreamingEvents,
@@ -19,6 +20,7 @@ interface AIChatProps {
 interface Message {
   type: "user" | "ai";
   content: string;
+  showSchedule?: boolean;
 }
 
 export default function AIChat({ initialAvatarId }: AIChatProps) {
@@ -91,7 +93,7 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
         setStream(undefined);
       });
 
-      avatarRef.current.on(StreamingEvents.STREAM_READY, (event) => {
+      avatarRef.current.on(StreamingEvents.STREAM_READY, (event: any) => {
         setStream(event.detail);
         setIsAvatarReady(true);
       });
@@ -156,7 +158,7 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
       if (data.success) {
         const newConversationId = data.data.conversation_id;
         setConversationId(newConversationId);
-        sessionStorage.setItem("counseling-session-id", newConversationId);
+        // sessionStorage.setItem("counseling-session-id", newConversationId);
         setMessages([
           {
             type: "ai",
@@ -221,7 +223,7 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
   };
 
   const startNewConversation = async () => {
-    sessionStorage.clear();
+    // sessionStorage.clear();
     setMessages([]);
     setConversationId(null);
     setInputMessage("");
@@ -309,9 +311,7 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex ${
-                  message.type === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`max-w-[80%] rounded-lg px-4 py-2 ${
@@ -321,14 +321,16 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
                   }`}
                 >
                   {message.content}
+                  {/* todo: remove not if API started to send showSchedule, currently not added to test. */}
+                  {message.type === "ai" && !message.showSchedule && conversationId && (
+                    <MessageButtons conversationId={conversationId} />
+                  )}
                 </div>
               </div>
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-gray-50 text-gray-800 rounded-lg p-4 shadow">
-                  Typing...
-                </div>
+                <div className="bg-gray-50 text-gray-800 rounded-lg p-4 shadow">Typing...</div>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -348,16 +350,12 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
                 : "Type your message..."
             }
             className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FF4B26] focus:ring-2 focus:ring-[#FF4B26]/20 transition-all disabled:opacity-50 disabled:bg-gray-50"
-            onKeyDown={(e) =>
-              e.key === "Enter" && !e.shiftKey && handleSendMessage()
-            }
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
             disabled={!isAvatarReady || isLoading || isSpeaking}
           />
           <button
             onClick={handleSendMessage}
-            disabled={
-              !isAvatarReady || !inputMessage.trim() || isLoading || isSpeaking
-            }
+            disabled={!isAvatarReady || !inputMessage.trim() || isLoading || isSpeaking}
             className="p-2 bg-[#FF4B26] text-white rounded-lg hover:bg-[#E63E1C] transition-colors disabled:opacity-50 disabled:bg-gray-400 shadow-[0_4px_12px_rgb(255,75,38,0.24)]"
           >
             <Send className="w-5 h-5" />
