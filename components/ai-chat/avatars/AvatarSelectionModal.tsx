@@ -6,7 +6,7 @@ interface AvatarSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (avatar: Avatar) => void;
-  selectedAvatarId: string;
+  selectedAvatarId: string | null;
 }
 
 export function AvatarSelectionModal({

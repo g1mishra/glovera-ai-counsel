@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { MessageCircle, Send, PlusCircle, Settings } from "lucide-react";
+import {
+  MessageCircle,
+  Send,
+  PlusCircle,
+  Settings,
+  MicOff,
+  Mic,
+} from "lucide-react";
 import { toast } from "react-hot-toast";
 import MessageButtons from "./MessageButtons";
 import StreamingAvatar, {
@@ -14,7 +21,7 @@ import { Avatar, AVATARS } from "./avatars/constants/avatars";
 import { AvatarSelectionModal } from "./avatars/AvatarSelectionModal";
 
 interface AIChatProps {
-  initialAvatarId: string;
+  initialAvatarId: string | null;
 }
 
 interface Message {
@@ -34,10 +41,10 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
   const avatarRef = useRef<StreamingAvatar | null>(null);
   const [isAvatarReady, setIsAvatarReady] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState<Avatar>(
-    AVATARS.find((a) => a.id === initialAvatarId) || AVATARS[0]
-  );
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(true);
+  const [selectedAvatar, setSelectedAvatar] = useState<Avatar | null>(null);
+  const [isVoiceChatActive, setIsVoiceChatActive] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState("");
 
   const fetchAccessToken = async () => {
     try {
@@ -54,14 +61,15 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
   };
 
   const handleAvatarSelect = async (avatar: Avatar) => {
-    if (avatarRef.current) {
-      await avatarRef.current.stopAvatar();
-    }
     setSelectedAvatar(avatar);
     setIsAvatarModalOpen(false);
   };
 
+  console.log("avatarRef.current", avatarRef.current);
+
   const initializeAvatar = async () => {
+    if (!selectedAvatar) return;
+
     try {
       setIsLoading(true);
 
@@ -78,19 +86,29 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
 
       avatarRef.current = new StreamingAvatar({ token });
 
-      // Set up event listeners
+      avatarRef.current.on(StreamingEvents.USER_START, () => {
+        setVoiceStatus("Listening...");
+      });
+
+      avatarRef.current.on(StreamingEvents.USER_STOP, () => {
+        setVoiceStatus("Processing...");
+      });
+
       avatarRef.current.on(StreamingEvents.AVATAR_START_TALKING, () => {
         setIsSpeaking(true);
+        setVoiceStatus("Avatar is speaking...");
       });
 
       avatarRef.current.on(StreamingEvents.AVATAR_STOP_TALKING, () => {
         setIsSpeaking(false);
+        setVoiceStatus(isVoiceChatActive ? "Waiting for you to speak..." : "");
       });
 
       avatarRef.current.on(StreamingEvents.STREAM_DISCONNECTED, () => {
         console.log("Stream disconnected");
         setIsAvatarReady(false);
         setStream(undefined);
+        setVoiceStatus("");
       });
 
       avatarRef.current.on(StreamingEvents.STREAM_READY, (event: any) => {
@@ -98,7 +116,6 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
         setIsAvatarReady(true);
       });
 
-      // Start avatar session
       const response = await avatarRef.current.createStartAvatar({
         quality: AvatarQuality.Medium,
         avatarName: selectedAvatar.id,
@@ -119,6 +136,28 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
       setStream(undefined);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const toggleVoiceChat = async () => {
+    if (!avatarRef.current) return;
+
+    try {
+      if (isVoiceChatActive) {
+        await avatarRef.current.closeVoiceChat();
+        setIsVoiceChatActive(false);
+        setVoiceStatus("");
+      } else {
+        await avatarRef.current.startVoiceChat({
+          useSilencePrompt: false,
+        });
+        setIsVoiceChatActive(true);
+        setVoiceStatus("Waiting for you to speak...");
+      }
+    } catch (error) {
+      console.error("Error toggling voice chat:", error);
+      toast.error("Failed to toggle voice chat");
+      setIsVoiceChatActive(false);
     }
   };
 
@@ -167,6 +206,9 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
         ]);
 
         await speakText(data.data.initial_message);
+        await avatarRef?.current?.startVoiceChat({
+          useSilencePrompt: false,
+        });
       } else {
         toast.error("Failed to start conversation");
       }
@@ -233,10 +275,14 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
   };
 
   useEffect(() => {
-    initializeAvatar();
-
+    if (selectedAvatar) {
+      initializeAvatar();
+    }
     return () => {
-      avatarRef.current?.stopAvatar();
+      if (avatarRef.current) {
+        avatarRef.current.closeVoiceChat();
+        avatarRef.current.stopAvatar();
+      }
     };
   }, [selectedAvatar]);
 
@@ -253,6 +299,17 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
+  if (!selectedAvatar) {
+    return (
+      <AvatarSelectionModal
+        isOpen={isAvatarModalOpen}
+        onClose={() => {}}
+        onSelect={handleAvatarSelect}
+        selectedAvatarId={null}
+      />
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
       <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow p-6 min-h-[300px] sm:min-h-[500px]">
@@ -265,13 +322,6 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
               </div>
             </div>
           )}
-          <button
-            onClick={() => setIsAvatarModalOpen(true)}
-            className="absolute top-4 right-4 p-2 bg-white/80 hover:bg-white rounded-full transition-colors z-20 shadow-md"
-            title="Change Avatar"
-          >
-            <Settings className="w-5 h-5 text-gray-700" />
-          </button>
           <video
             ref={mediaStreamRef}
             autoPlay
@@ -311,7 +361,9 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex ${
+                  message.type === "user" ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
                   className={`max-w-[80%] rounded-lg px-4 py-2 ${
@@ -322,21 +374,24 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
                 >
                   {message.content}
                   {/* todo: remove not if API started to send showSchedule, currently not added to test. */}
-                  {message.type === "ai" && !message.showSchedule && conversationId && (
-                    <MessageButtons conversationId={conversationId} />
-                  )}
+                  {message.type === "ai" &&
+                    !message.showSchedule &&
+                    conversationId && (
+                      <MessageButtons conversationId={conversationId} />
+                    )}
                 </div>
               </div>
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-gray-50 text-gray-800 rounded-lg p-4 shadow">Typing...</div>
+                <div className="bg-gray-50 text-gray-800 rounded-lg p-4 shadow">
+                  Typing...
+                </div>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
         )}
-
         <div className="flex items-center space-x-2 pt-4 border-t border-gray-100">
           <input
             type="text"
@@ -345,29 +400,43 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
             placeholder={
               !isAvatarReady
                 ? "Please wait for avatar to load..."
-                : isSpeaking
-                ? "Avatar is speaking..."
-                : "Type your message..."
+                : voiceStatus ||
+                  (isSpeaking
+                    ? "Avatar is speaking..."
+                    : "Type your message...")
             }
             className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FF4B26] focus:ring-2 focus:ring-[#FF4B26]/20 transition-all disabled:opacity-50 disabled:bg-gray-50"
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
+            onKeyDown={(e) =>
+              e.key === "Enter" && !e.shiftKey && handleSendMessage()
+            }
             disabled={!isAvatarReady || isLoading || isSpeaking}
           />
           <button
+            onClick={toggleVoiceChat}
+            disabled={!isAvatarReady || isLoading || isSpeaking}
+            className={`p-2 rounded-lg transition-colors disabled:opacity-50 disabled:bg-gray-400 shadow-sm ${
+              isVoiceChatActive
+                ? "bg-[#FF4B26] text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+            }`}
+          >
+            {isVoiceChatActive ? (
+              <MicOff className="w-5 h-5" />
+            ) : (
+              <Mic className="w-5 h-5" />
+            )}
+          </button>
+          <button
             onClick={handleSendMessage}
-            disabled={!isAvatarReady || !inputMessage.trim() || isLoading || isSpeaking}
+            disabled={
+              !isAvatarReady || !inputMessage.trim() || isLoading || isSpeaking
+            }
             className="p-2 bg-[#FF4B26] text-white rounded-lg hover:bg-[#E63E1C] transition-colors disabled:opacity-50 disabled:bg-gray-400 shadow-[0_4px_12px_rgb(255,75,38,0.24)]"
           >
             <Send className="w-5 h-5" />
           </button>
         </div>
       </div>
-      <AvatarSelectionModal
-        isOpen={isAvatarModalOpen}
-        onClose={() => setIsAvatarModalOpen(false)}
-        onSelect={handleAvatarSelect}
-        selectedAvatarId={selectedAvatar.id}
-      />
     </div>
   );
 }

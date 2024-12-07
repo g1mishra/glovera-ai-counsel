@@ -12,7 +12,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 interface Conversation {
   id: string;
@@ -43,9 +51,11 @@ const AdminDashboard = () => {
 
   const today = new Date().toDateString();
   const currentStats = {
-    todaySessions: conversations.filter((c) => new Date(c.createdAt).toDateString() === today)
+    todaySessions: conversations.filter(
+      (c) => new Date(c.createdAt).toDateString() === today
+    ).length,
+    activeConversations: conversations.filter((c) => c.status === "active")
       .length,
-    activeConversations: conversations.filter((c) => c.status === "active").length,
     avgMessages: Math.round(
       conversations.reduce((acc, conv) => acc + conv.messages.length, 0) /
         Math.max(conversations.length, 1)
@@ -66,7 +76,9 @@ const AdminDashboard = () => {
   const fetchConversations = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/conversations?filter=${timeFilter}`);
+      const response = await fetch(
+        `/api/admin/conversations?filter=${timeFilter}`
+      );
       const data = await response.json();
       setConversations(data.conversations);
     } catch (error) {
@@ -86,8 +98,8 @@ const AdminDashboard = () => {
 
   const filteredConversations = conversations.filter(
     (conv) =>
-      conv.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conv.user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      conv?.user?.name?.toLowerCase()?.includes(searchQuery?.toLowerCase()) ||
+      conv?.user?.email?.toLowerCase()?.includes(searchQuery?.toLowerCase())
   );
 
   return (
@@ -95,7 +107,9 @@ const AdminDashboard = () => {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-500">Monitor conversations and platform activity</p>
+          <p className="mt-1 text-sm text-gray-500">
+            Monitor conversations and platform activity
+          </p>
         </div>
       </div>
 
@@ -164,8 +178,12 @@ const AdminDashboard = () => {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-medium text-gray-900">{conversation.user.name}</h3>
-                    <p className="text-sm text-gray-500">{conversation.user.email}</p>
+                    <h3 className="font-medium text-gray-900">
+                      {conversation.user.name}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {conversation.user.email}
+                    </p>
                     <p className="text-sm text-gray-500 mt-1">
                       Messages: {conversation.messages.length}
                     </p>
@@ -234,7 +252,9 @@ const StatCard = ({ label, value, previousValue }: StatCardProps) => {
           </span>
         )}
       </div>
-      <p className="text-2xl font-semibold text-gray-900 mt-2">{value.toLocaleString()}</p>
+      <p className="text-2xl font-semibold text-gray-900 mt-2">
+        {value.toLocaleString()}
+      </p>
     </div>
   );
 };
