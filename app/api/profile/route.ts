@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "../auth/authOptions";
+import { Prisma } from "@prisma/client";
 
 const ProfileSchema = z.object({
   undergraduate_degree: z.string().min(1, "Degree is required"),
@@ -11,18 +12,13 @@ const ProfileSchema = z.object({
   backlogs: z.number().min(0),
   naac_grade: z.string().nullable(),
   program_type: z.string().min(1, "Program type is required"),
-  intake_preference: z
-    .array(z.string())
-    .min(1, "Select at least one intake preference"),
   language_proficiency: z.object({
     test_type: z.string().min(1, "Test type is required"),
     overall_score: z.number().min(0, "Score is required"),
   }),
   work_experience_years: z.number().min(0).nullable(),
   technical_skills: z.array(z.string()).optional(),
-  preferred_study_countries: z
-    .array(z.string())
-    .min(1, "Select at least one country"),
+  preferred_study_countries: z.array(z.string()).min(1, "Select at least one country"),
   target_intake: z.string().min(1, "Target intake is required"),
   budget_range: z.string().min(1, "Budget range is required"),
   eligible_programs: z.array(z.string()).optional(),
@@ -35,7 +31,15 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    try {
+      await prisma.$connect();
+    } catch (connError) {
+      console.error("Prisma connection error:", connError);
+      return Response.json({ error: "Database connection failed" }, { status: 500 });
+    }
+
     const data = await request.json();
+
     const validatedData = ProfileSchema.parse({
       ...data,
       gpa: data.gpa ? parseFloat(data.gpa) : null,
@@ -50,41 +54,58 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log(JSON.stringify(session));
+    try {
+      // Explicitly check if ID is valid MongoDB ObjectId
+      if (!session.user.id.match(/^[0-9a-fA-F]{24}$/)) {
+        throw new Error("Invalid ObjectId format");
+      }
 
-    const existingProfile = await prisma.profile.findUnique({
-      where: { userId: session.user.id },
-    });
-
-    const profileData = {
-      ...validatedData,
-      language_proficiency: {
-        test_type: validatedData.language_proficiency.test_type,
-        overall_score: validatedData.language_proficiency.overall_score,
-      },
-    };
-
-    console.log("profileData", profileData);
-
-    let profile;
-    if (existingProfile) {
-      profile = await prisma.profile.update({
-        where: { userId: session.user.id },
-        data: profileData,
-      });
-    } else {
-      profile = await prisma.profile.create({
-        data: {
-          ...profileData,
+      const existingProfile = await prisma.profile.findUnique({
+        where: {
           userId: session.user.id,
         },
+        select: { id: true }, // Only select ID first to verify query works
       });
-    }
 
-    return Response.json({
-      success: true,
-      data: profile,
-    });
+      const profileData = {
+        ...validatedData,
+        language_proficiency: {
+          test_type: validatedData.language_proficiency.test_type,
+          overall_score: validatedData.language_proficiency.overall_score,
+        },
+      };
+
+      let profile;
+      if (existingProfile) {
+        profile = await prisma.profile.update({
+          where: { userId: session.user.id },
+          data: profileData,
+        });
+      } else {
+        profile = await prisma.profile.create({
+          data: {
+            ...profileData,
+            userId: session.user.id,
+          },
+        });
+      }
+
+      return Response.json({ success: true, data: profile });
+    } catch (dbError) {
+      console.error("Full database error:", dbError);
+      if (dbError instanceof Prisma.PrismaClientKnownRequestError) {
+        console.error("Prisma error code:", dbError.code);
+        console.error("Prisma error meta:", dbError.meta);
+      }
+      return Response.json(
+        {
+          success: false,
+          error: "Database operation failed",
+          details: dbError instanceof Error ? dbError.message : "Unknown error",
+        },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error("Profile update error:", error);
 
@@ -120,14 +141,26 @@ export async function GET() {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const profile = await prisma.profile.findUnique({
-      where: { userId: session.user.id },
-    });
+    // Add connection check
+    try {
+      await prisma.$connect();
 
-    return Response.json({
-      success: true,
-      data: profile,
-    });
+      const profile = await prisma.profile.findUnique({
+        where: {
+          userId: session.user.id,
+        },
+      });
+
+      console.log("GET query result:", profile);
+
+      return Response.json({
+        success: true,
+        data: profile,
+      });
+    } catch (dbError) {
+      console.error("Database error in GET:", dbError);
+      throw dbError;
+    }
   } catch (error) {
     console.error("Profile fetch error:", error);
     return Response.json(

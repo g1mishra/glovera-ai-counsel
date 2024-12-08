@@ -21,18 +21,13 @@ const baseFormSchema = z.object({
   }, "Backlogs must be a non-negative number"),
   naac_grade: z.string().optional(),
   program_type: z.string().min(1, "Program type is required"),
-  intake_preference: z
-    .array(z.string())
-    .min(1, "Select at least one intake preference"),
   language_proficiency: z.object({
     test_type: z.string().min(1, "Test type is required"),
     overall_score: z.string().min(1, "Score is required"),
   }),
   work_experience_years: z.string(),
   technical_skills: z.array(z.string()).optional(),
-  preferred_study_countries: z
-    .array(z.string())
-    .min(1, "Select at least one country"),
+  preferred_study_countries: z.array(z.string()).min(1, "Select at least one country"),
   target_intake: z.string().min(1, "Target intake is required"),
   budget_range: z.string().min(1, "Budget range is required"),
 });
@@ -41,36 +36,11 @@ const editingFormSchema = baseFormSchema.extend({
   name: z.string().min(1, "Name is required"),
 });
 
-export const STUDY_COUNTRIES = [
-  "United States",
-  "United Kingdom",
-  "Canada",
-] as const;
+export const STUDY_COUNTRIES = ["United States", "United Kingdom", "Canada"] as const;
 
-export const PROGRAM_TYPES = [
-  "Masters",
-  "PhD",
-  "Graduate Certificate",
-  "Diploma",
-] as const;
+export const PROGRAM_TYPES = ["Masters", "PhD", "Graduate Certificate", "Diploma"] as const;
 
-export const INTAKE_PREFERENCES = [
-  "Fall",
-  "Spring",
-  "Summer",
-  "Winter",
-] as const;
-
-export const NAAC_GRADES = [
-  "A++",
-  "A+",
-  "A",
-  "B++",
-  "B+",
-  "B",
-  "C",
-  "Not Applicable",
-] as const;
+export const NAAC_GRADES = ["A++", "A+", "A", "B++", "B+", "B", "C", "Not Applicable"] as const;
 
 export const INTAKE_OPTIONS = [
   { value: "Fall 2024", label: "Fall 2024 (September 2024)" },
@@ -128,14 +98,11 @@ export default function StudentProfileForm({
     backlogs: user.profile?.backlogs?.toString() ?? "0",
     naac_grade: user.profile?.naac_grade ?? "",
     program_type: user.profile?.program_type ?? "",
-    intake_preference: user.profile?.intake_preference ?? [],
     language_proficiency: {
       test_type: (user.profile?.language_proficiency as any).test_type ?? "",
-      overall_score:
-        (user.profile?.language_proficiency as any)?.overall_score ?? "",
+      overall_score: (user.profile?.language_proficiency as any)?.overall_score ?? "",
     },
-    work_experience_years:
-      user.profile?.work_experience_years?.toString() ?? "0",
+    work_experience_years: user.profile?.work_experience_years?.toString() ?? "0",
     technical_skills: user.profile?.technical_skills ?? [],
     preferred_study_countries: user.profile?.preferred_study_countries ?? [],
     target_intake: user.profile?.target_intake ?? "",
@@ -189,18 +156,13 @@ export default function StudentProfileForm({
           undergraduate_degree: formData.undergraduate_degree,
           university: formData.university,
           gpa: formData.gpa ? parseFloat(formData.gpa) : null,
-          percentage: formData.percentage
-            ? parseFloat(formData.percentage)
-            : null,
+          percentage: formData.percentage ? parseFloat(formData.percentage) : null,
           backlogs: parseInt(formData.backlogs),
           naac_grade: formData.naac_grade,
           program_type: formData.program_type,
-          intake_preference: formData.intake_preference,
           language_proficiency: {
             test_type: formData.language_proficiency.test_type,
-            overall_score: parseFloat(
-              formData.language_proficiency.overall_score
-            ),
+            overall_score: parseFloat(formData.language_proficiency.overall_score),
           },
           work_experience_years: parseInt(formData.work_experience_years),
           technical_skills: formData.technical_skills || [],
@@ -224,9 +186,7 @@ export default function StudentProfileForm({
       });
 
       toast.success(
-        mode === "onboarding"
-          ? "Profile completed successfully"
-          : "Profile updated successfully"
+        mode === "onboarding" ? "Profile completed successfully" : "Profile updated successfully"
       );
 
       if (onComplete) {
@@ -237,19 +197,13 @@ export default function StudentProfileForm({
       }
     } catch (error) {
       console.error("Error saving profile:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save profile"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to save profile");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleArrayChange = (
-    field: string,
-    value: string,
-    checked: boolean
-  ) => {
+  const handleArrayChange = (field: string, value: string, checked: boolean) => {
     setFormData((prev: any) => ({
       ...prev,
       [field]: checked
@@ -265,34 +219,24 @@ export default function StudentProfileForm({
     >
       {mode === "editing" && (
         <div>
-          <label
-            htmlFor="name"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
             Name
           </label>
           <input
             type="text"
             id="name"
             value={formData.name}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, name: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 focus:border-[#FF4B26] focus:ring-[#FF4B26]"
             required
           />
-          {errors.name && (
-            <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-          )}
+          {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label
-            htmlFor="undergraduate_degree"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="undergraduate_degree" className="block text-sm font-medium text-gray-700">
             Undergraduate Degree
           </label>
           <input
@@ -310,17 +254,12 @@ export default function StudentProfileForm({
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
           />
           {errors.undergraduate_degree && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.undergraduate_degree}
-            </p>
+            <p className="text-red-500 text-sm mt-1">{errors.undergraduate_degree}</p>
           )}
         </div>
 
         <div>
-          <label
-            htmlFor="university"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="university" className="block text-sm font-medium text-gray-700">
             University
           </label>
           <input
@@ -329,21 +268,14 @@ export default function StudentProfileForm({
             required
             placeholder="University name"
             value={formData.university}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, university: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, university: e.target.value }))}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
           />
-          {errors.university && (
-            <p className="text-red-500 text-sm mt-1">{errors.university}</p>
-          )}
+          {errors.university && <p className="text-red-500 text-sm mt-1">{errors.university}</p>}
         </div>
 
         <div>
-          <label
-            htmlFor="gpa"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="gpa" className="block text-sm font-medium text-gray-700">
             GPA (out of 4.0)
           </label>
           <input
@@ -353,21 +285,14 @@ export default function StudentProfileForm({
             min="0"
             max="4"
             value={formData.gpa}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, gpa: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, gpa: e.target.value }))}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
           />
-          {errors.gpa && (
-            <p className="text-red-500 text-sm mt-1">{errors.gpa}</p>
-          )}
+          {errors.gpa && <p className="text-red-500 text-sm mt-1">{errors.gpa}</p>}
         </div>
 
         <div>
-          <label
-            htmlFor="percentage"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="percentage" className="block text-sm font-medium text-gray-700">
             Percentage
           </label>
           <input
@@ -378,21 +303,14 @@ export default function StudentProfileForm({
             max="100"
             required
             value={formData.percentage}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, percentage: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, percentage: e.target.value }))}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
           />
-          {errors.percentage && (
-            <p className="text-red-500 text-sm mt-1">{errors.percentage}</p>
-          )}
+          {errors.percentage && <p className="text-red-500 text-sm mt-1">{errors.percentage}</p>}
         </div>
 
         <div>
-          <label
-            htmlFor="backlogs"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="backlogs" className="block text-sm font-medium text-gray-700">
             Number of Backlogs
           </label>
           <input
@@ -401,29 +319,20 @@ export default function StudentProfileForm({
             min="0"
             required
             value={formData.backlogs}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, backlogs: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, backlogs: e.target.value }))}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
           />
-          {errors.backlogs && (
-            <p className="text-red-500 text-sm mt-1">{errors.backlogs}</p>
-          )}
+          {errors.backlogs && <p className="text-red-500 text-sm mt-1">{errors.backlogs}</p>}
         </div>
 
         <div>
-          <label
-            htmlFor="naac_grade"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="naac_grade" className="block text-sm font-medium text-gray-700">
             NAAC Grade
           </label>
           <select
             id="naac_grade"
             value={formData.naac_grade}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, naac_grade: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, naac_grade: e.target.value }))}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
           >
             <option value="">Select NAAC grade</option>
@@ -433,25 +342,18 @@ export default function StudentProfileForm({
               </option>
             ))}
           </select>
-          {errors.naac_grade && (
-            <p className="text-red-500 text-sm mt-1">{errors.naac_grade}</p>
-          )}
+          {errors.naac_grade && <p className="text-red-500 text-sm mt-1">{errors.naac_grade}</p>}
         </div>
 
         <div>
-          <label
-            htmlFor="program_type"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="program_type" className="block text-sm font-medium text-gray-700">
             Program Type
           </label>
           <select
             id="program_type"
             required
             value={formData.program_type}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, program_type: e.target.value }))
-            }
+            onChange={(e) => setFormData((prev) => ({ ...prev, program_type: e.target.value }))}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
           >
             <option value="">Select program type</option>
@@ -467,10 +369,7 @@ export default function StudentProfileForm({
         </div>
 
         <div>
-          <label
-            htmlFor="test_type"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="test_type" className="block text-sm font-medium text-gray-700">
             English Test Type
           </label>
           <select
@@ -494,17 +393,12 @@ export default function StudentProfileForm({
             <option value="PTE">PTE</option>
           </select>
           {errors["language_proficiency.test_type"] && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors["language_proficiency.test_type"]}
-            </p>
+            <p className="text-red-500 text-sm mt-1">{errors["language_proficiency.test_type"]}</p>
           )}
         </div>
 
         <div>
-          <label
-            htmlFor="test_score"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="test_score" className="block text-sm font-medium text-gray-700">
             Test Score
           </label>
           <input
@@ -553,41 +447,9 @@ export default function StudentProfileForm({
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
           />
           {errors.work_experience_years && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.work_experience_years}
-            </p>
+            <p className="text-red-500 text-sm mt-1">{errors.work_experience_years}</p>
           )}
         </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Intake Preferences
-        </label>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {INTAKE_PREFERENCES.map((intake) => (
-            <label key={intake} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                checked={formData.intake_preference.includes(intake)}
-                onChange={(e) =>
-                  handleArrayChange(
-                    "intake_preference",
-                    intake,
-                    e.target.checked
-                  )
-                }
-                className="rounded border-gray-300"
-              />
-              <span className="text-sm text-gray-700">{intake}</span>
-            </label>
-          ))}
-        </div>
-        {errors.intake_preference && (
-          <p className="text-red-500 text-sm mt-1">
-            {errors.intake_preference}
-          </p>
-        )}
       </div>
 
       <div>
@@ -601,11 +463,7 @@ export default function StudentProfileForm({
                 type="checkbox"
                 checked={formData.preferred_study_countries.includes(country)}
                 onChange={(e) =>
-                  handleArrayChange(
-                    "preferred_study_countries",
-                    country,
-                    e.target.checked
-                  )
+                  handleArrayChange("preferred_study_countries", country, e.target.checked)
                 }
                 className="rounded border-gray-300"
               />
@@ -614,26 +472,19 @@ export default function StudentProfileForm({
           ))}
         </div>
         {errors.preferred_study_countries && (
-          <p className="text-red-500 text-sm mt-1">
-            {errors.preferred_study_countries}
-          </p>
+          <p className="text-red-500 text-sm mt-1">{errors.preferred_study_countries}</p>
         )}
       </div>
 
       <div>
-        <label
-          htmlFor="target_intake"
-          className="block text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="target_intake" className="block text-sm font-medium text-gray-700">
           Target Intake
         </label>
         <select
           id="target_intake"
           required
           value={formData.target_intake}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, target_intake: e.target.value }))
-          }
+          onChange={(e) => setFormData((prev) => ({ ...prev, target_intake: e.target.value }))}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
         >
           <option value="">Select intake</option>
@@ -649,19 +500,14 @@ export default function StudentProfileForm({
       </div>
 
       <div>
-        <label
-          htmlFor="budget_range"
-          className="block text-sm font-medium text-gray-700"
-        >
+        <label htmlFor="budget_range" className="block text-sm font-medium text-gray-700">
           Annual Budget (INR)
         </label>
         <select
           id="budget_range"
           required
           value={formData.budget_range}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, budget_range: e.target.value }))
-          }
+          onChange={(e) => setFormData((prev) => ({ ...prev, budget_range: e.target.value }))}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
         >
           <option value="">Select budget range</option>
@@ -671,9 +517,7 @@ export default function StudentProfileForm({
             </option>
           ))}
         </select>
-        {errors.budget_range && (
-          <p className="text-red-500 text-sm mt-1">{errors.budget_range}</p>
-        )}
+        {errors.budget_range && <p className="text-red-500 text-sm mt-1">{errors.budget_range}</p>}
       </div>
 
       <button

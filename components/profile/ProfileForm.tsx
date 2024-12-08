@@ -8,6 +8,8 @@ import { useState } from "react";
 export default function ProfileForm({ user }: { user: User }) {
   const [isEditing, setIsEditing] = useState(false);
 
+  const language_proficiency = user.profile?.language_proficiency as any;
+
   if (!isEditing) {
     return (
       <div className="space-y-8">
@@ -61,10 +63,30 @@ export default function ProfileForm({ user }: { user: User }) {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700">Percentage</label>
+            <p className="mt-1 text-gray-900">{user.profile?.percentage || "Not specified"}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Backlogs</label>
+            <p className="mt-1 text-gray-900">{user.profile?.backlogs || "Not specified"}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">NAAC Grade</label>
+            <p className="mt-1 text-gray-900">{user.profile?.naac_grade || "Not specified"}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Program Type</label>
+            <p className="mt-1 text-gray-900">{user.profile?.program_type || "Not specified"}</p>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-gray-700">Language Proficiency</label>
             <p className="mt-1 text-gray-900">
-              {user.profile?.language_proficiency?.test_type
-                ? `${user.profile.language_proficiency.test_type}: ${user.profile.language_proficiency.overall_score}`
+              {language_proficiency?.test_type
+                ? `${language_proficiency?.test_type}: ${language_proficiency.overall_score}`
                 : "Not specified"}
             </p>
           </div>

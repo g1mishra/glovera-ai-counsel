@@ -13,7 +13,6 @@ export function isProfileComplete(profile?: Profile | null): boolean {
       (profile.language_proficiency as any)?.test_type &&
       (profile.language_proficiency as any)?.overall_score &&
       // Required preferences
-      profile.intake_preference?.length > 0 &&
       profile.preferred_study_countries?.length > 0 &&
       profile.target_intake &&
       profile.budget_range
