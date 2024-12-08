@@ -44,7 +44,7 @@ export function AvatarSelectionModal({
       <div className="relative w-full max-w-[600px] mx-4 bg-white rounded-xl shadow-2xl">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-2xl font-bold text-center flex-1">
-            Select Your Avatar
+            Select who you want to talk to
           </h2>
           <button
             onClick={onClose}

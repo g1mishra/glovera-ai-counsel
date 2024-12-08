@@ -1,28 +1,21 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import {
-  MessageCircle,
-  Send,
-  PlusCircle,
-  Settings,
-  MicOff,
-  Mic,
-} from "lucide-react";
-import { toast } from "react-hot-toast";
-import MessageButtons from "./MessageButtons";
+import { processAudioChunk } from "@/utils/audio";
 import StreamingAvatar, {
   AvatarQuality,
   StreamingEvents,
-  TaskType,
   TaskMode,
+  TaskType,
 } from "@heygen/streaming-avatar";
-import { Avatar, AVATARS } from "./avatars/constants/avatars";
+import { MessageCircle, Mic, MicOff, PlusCircle, Send } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
 import { AvatarSelectionModal } from "./avatars/AvatarSelectionModal";
-
-interface AIChatProps {
-  initialAvatarId: string | null;
-}
+import { Avatar } from "./avatars/constants/avatars";
+import MessageButtons from "./MessageButtons";
+import { useRouter } from "next/navigation";
+import { LoadingScreen } from "./LoadingScreen";
+import { Loader2 } from "lucide-react";
 
 interface Message {
   type: "user" | "ai";
@@ -30,7 +23,7 @@ interface Message {
   showSchedule?: boolean;
 }
 
-export default function AIChat({ initialAvatarId }: AIChatProps) {
+export default function AIChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +38,12 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
   const [selectedAvatar, setSelectedAvatar] = useState<Avatar | null>(null);
   const [isVoiceChatActive, setIsVoiceChatActive] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState("");
+  const pendingMessageRef = useRef(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [isInitializing, setIsInitializing] = useState(false);
+
+  const router = useRouter();
 
   const fetchAccessToken = async () => {
     try {
@@ -65,12 +64,11 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
     setIsAvatarModalOpen(false);
   };
 
-  console.log("avatarRef.current", avatarRef.current);
-
   const initializeAvatar = async () => {
     if (!selectedAvatar) return;
 
     try {
+      setIsInitializing(true);
       setIsLoading(true);
 
       if (avatarRef.current) {
@@ -86,17 +84,19 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
 
       avatarRef.current = new StreamingAvatar({ token });
 
-      avatarRef.current.on(StreamingEvents.USER_START, () => {
-        setVoiceStatus("Listening...");
+      const response = await avatarRef.current.createStartAvatar({
+        quality: AvatarQuality.Medium,
+        avatarName: selectedAvatar.id,
+        language: "en",
+        disableIdleTimeout: true,
       });
 
-      avatarRef.current.on(StreamingEvents.USER_STOP, () => {
-        setVoiceStatus("Processing...");
-      });
+      if (response) {
+        startConversation();
+      }
 
       avatarRef.current.on(StreamingEvents.AVATAR_START_TALKING, () => {
         setIsSpeaking(true);
-        setVoiceStatus("Avatar is speaking...");
       });
 
       avatarRef.current.on(StreamingEvents.AVATAR_STOP_TALKING, () => {
@@ -111,53 +111,100 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
         setVoiceStatus("");
       });
 
-      avatarRef.current.on(StreamingEvents.STREAM_READY, (event: any) => {
+      avatarRef.current.on(StreamingEvents.STREAM_READY, async (event: any) => {
         setStream(event.detail);
         setIsAvatarReady(true);
       });
-
-      const response = await avatarRef.current.createStartAvatar({
-        quality: AvatarQuality.Medium,
-        avatarName: selectedAvatar.id,
-        voice: {
-          rate: 1,
-        },
-        language: selectedAvatar.language.split(" ")[0].toLowerCase(),
-        disableIdleTimeout: true,
-      });
-
-      if (response) {
-        startConversation();
-      }
     } catch (error) {
       console.error("Error initializing avatar:", error);
       toast.error("Failed to initialize avatar");
       setIsAvatarReady(false);
       setStream(undefined);
     } finally {
+      setIsInitializing(false);
       setIsLoading(false);
     }
   };
 
-  const toggleVoiceChat = async () => {
-    if (!avatarRef.current) return;
-
+  const startRecording = async () => {
     try {
-      if (isVoiceChatActive) {
-        await avatarRef.current.closeVoiceChat();
-        setIsVoiceChatActive(false);
-        setVoiceStatus("");
-      } else {
-        await avatarRef.current.startVoiceChat({
-          useSilencePrompt: false,
-        });
-        setIsVoiceChatActive(true);
-        setVoiceStatus("Waiting for you to speak...");
-      }
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        audioChunksRef.current = [];
+
+        // Convert blob to base64
+        const base64Audio = await processAudioChunk(audioBlob);
+
+        if (base64Audio && conversationId) {
+          setVoiceStatus("Processing speech...");
+          try {
+            const response = await fetch("/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "continue",
+                conversationId,
+                audio_base64: base64Audio,
+              }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  type: "user",
+                  content: data.data.user_message,
+                },
+                {
+                  type: "ai",
+                  content: data.data.ai_response,
+                },
+              ]);
+              await speakText(data.data.ai_response);
+            }
+          } catch (error) {
+            console.error("Speech processing error:", error);
+            toast.error("Failed to process speech");
+          } finally {
+            setVoiceStatus(isVoiceChatActive ? "Waiting for you to speak..." : "");
+          }
+        }
+      };
+
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsVoiceChatActive(true);
+      setVoiceStatus("Listening...");
     } catch (error) {
-      console.error("Error toggling voice chat:", error);
-      toast.error("Failed to toggle voice chat");
-      setIsVoiceChatActive(false);
+      console.error("Failed to start recording:", error);
+      toast.error("Failed to access microphone");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
+    }
+    setIsVoiceChatActive(false);
+    setVoiceStatus("");
+  };
+
+  const toggleVoiceChat = async () => {
+    if (isVoiceChatActive) {
+      stopRecording();
+    } else {
+      await startRecording();
     }
   };
 
@@ -206,9 +253,6 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
         ]);
 
         await speakText(data.data.initial_message);
-        await avatarRef?.current?.startVoiceChat({
-          useSilencePrompt: false,
-        });
       } else {
         toast.error("Failed to start conversation");
       }
@@ -220,8 +264,9 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() || !conversationId) return;
+  const handleSendMessage = useCallback(async () => {
+    if (pendingMessageRef.current || !inputMessage.trim() || !conversationId) return;
+    pendingMessageRef.current = true;
 
     const userMessage = inputMessage.trim();
     setInputMessage("");
@@ -261,8 +306,9 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
       toast.error("Failed to send message");
     } finally {
       setIsLoading(false);
+      pendingMessageRef.current = false;
     }
-  };
+  }, [inputMessage, conversationId]);
 
   const startNewConversation = async () => {
     // sessionStorage.clear();
@@ -278,10 +324,17 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
     if (selectedAvatar) {
       initializeAvatar();
     }
+
     return () => {
       if (avatarRef.current) {
-        avatarRef.current.closeVoiceChat();
+        // Proper cleanup of all resources
         avatarRef.current.stopAvatar();
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+        }
+      }
+      if (mediaRecorderRef.current?.state === "recording") {
+        stopRecording();
       }
     };
   }, [selectedAvatar]);
@@ -303,18 +356,24 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
     return (
       <AvatarSelectionModal
         isOpen={isAvatarModalOpen}
-        onClose={() => {}}
+        onClose={() => {
+          router.push("/");
+        }}
         onSelect={handleAvatarSelect}
         selectedAvatarId={null}
       />
     );
   }
 
+  if (isInitializing) {
+    return <LoadingScreen selectedAvatar={selectedAvatar} />;
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
       <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow p-6 min-h-[300px] sm:min-h-[500px]">
         <div className="flex flex-col items-center justify-center h-full relative">
-          {!isAvatarReady && (
+          {!isAvatarReady && !isInitializing && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-900/10 rounded-lg z-10">
               <div className="text-center">
                 <div className="w-16 h-16 border-4 border-[#FF4B26] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -361,9 +420,7 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex ${
-                  message.type === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`max-w-[80%] rounded-lg px-4 py-2 ${
@@ -374,19 +431,15 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
                 >
                   {message.content}
                   {/* todo: remove not if API started to send showSchedule, currently not added to test. */}
-                  {message.type === "ai" &&
-                    !message.showSchedule &&
-                    conversationId && (
-                      <MessageButtons conversationId={conversationId} />
-                    )}
+                  {message.type === "ai" && !message.showSchedule && conversationId && (
+                    <MessageButtons conversationId={conversationId} />
+                  )}
                 </div>
               </div>
             ))}
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-gray-50 text-gray-800 rounded-lg p-4 shadow">
-                  Typing...
-                </div>
+                <div className="bg-gray-50 text-gray-800 rounded-lg p-4 shadow">Processing...</div>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -400,42 +453,55 @@ export default function AIChat({ initialAvatarId }: AIChatProps) {
             placeholder={
               !isAvatarReady
                 ? "Please wait for avatar to load..."
-                : voiceStatus ||
-                  (isSpeaking
-                    ? "Avatar is speaking..."
-                    : "Type your message...")
+                : voiceStatus || (isSpeaking ? "Avatar is speaking..." : "Type your message...")
             }
-            className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FF4B26] focus:ring-2 focus:ring-[#FF4B26]/20 transition-all disabled:opacity-50 disabled:bg-gray-50"
-            onKeyDown={(e) =>
-              e.key === "Enter" && !e.shiftKey && handleSendMessage()
-            }
+            className={`flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#FF4B26] focus:ring-2 focus:ring-[#FF4B26]/20 transition-all disabled:opacity-50 disabled:bg-gray-50 ${
+              isVoiceChatActive ? "border-[#FF4B26]" : ""
+            }`}
+            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
             disabled={!isAvatarReady || isLoading || isSpeaking}
           />
           <button
             onClick={toggleVoiceChat}
-            disabled={!isAvatarReady || isLoading || isSpeaking}
-            className={`p-2 rounded-lg transition-colors disabled:opacity-50 disabled:bg-gray-400 shadow-sm ${
+            disabled={!isAvatarReady || isSpeaking}
+            className={`p-2 rounded-lg transition-all disabled:opacity-50 disabled:bg-gray-400 shadow-sm relative ${
               isVoiceChatActive
-                ? "bg-[#FF4B26] text-white"
+                ? "bg-[#FF4B26] text-white animate-pulse"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             {isVoiceChatActive ? (
-              <MicOff className="w-5 h-5" />
+              <>
+                <MicOff className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+              </>
             ) : (
               <Mic className="w-5 h-5" />
             )}
           </button>
           <button
             onClick={handleSendMessage}
-            disabled={
-              !isAvatarReady || !inputMessage.trim() || isLoading || isSpeaking
-            }
-            className="p-2 bg-[#FF4B26] text-white rounded-lg hover:bg-[#E63E1C] transition-colors disabled:opacity-50 disabled:bg-gray-400 shadow-[0_4px_12px_rgb(255,75,38,0.24)]"
+            disabled={!isAvatarReady || !inputMessage.trim() || isLoading || isSpeaking}
+            className="p-2 bg-[#FF4B26] text-white rounded-lg hover:bg-[#E63E1C] transition-all disabled:opacity-50 disabled:bg-gray-400 shadow-[0_4px_12px_rgb(255,75,38,0.24)] relative"
           >
-            <Send className="w-5 h-5" />
+            {isLoading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
           </button>
         </div>
+
+        {voiceStatus && (
+          <div className="absolute z-50 bottom-20 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-4 py-2 rounded-full text-sm shadow-lg">
+            <div className="flex items-center gap-2">
+              {isVoiceChatActive && (
+                <span className="block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+              )}
+              {voiceStatus}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
