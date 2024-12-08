@@ -1,8 +1,9 @@
 import { CalendarPlus } from "lucide-react";
-import { useRef, useState } from "react";
-import CalendarModal from "./CalendarModal";
 import { useSession } from "next-auth/react";
+import dynamic from "next/dynamic";
+import { useRef } from "react";
 
+const CalendarModal = dynamic(() => import("./CalendarModal"), { ssr: false });
 interface MessageButtonsProps {
   conversationId: string;
 }
