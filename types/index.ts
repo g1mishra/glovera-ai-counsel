@@ -1,3 +1,5 @@
+import { Profile } from "@prisma/client";
+
 export interface Program {
   id: string;
   course_name: string;
@@ -28,7 +30,7 @@ export interface User {
   email?: string | null;
   image?: string | null;
   role?: "student" | "admin";
-  profile?: UserProfile;
+  profile?: Profile;
 }
 
 export interface StudentProfile {

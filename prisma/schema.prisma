@@ -53,13 +53,19 @@ model Profile {
     user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
     undergraduate_degree      String?
     university                String?
-    gpa                       String?
-    language_proficiency      Json?
-    work_experience_years     String?
+    gpa                       Float?
+    percentage                Float?
+    backlogs                  Int?
+    naac_grade                String?
+    program_type              String?
+    intake_preference         String[] @default([])
+    language_proficiency      Json? // {test_type: String, overall_score: Float}
+    work_experience_years     Int?
     technical_skills          String[] @default([])
     preferred_study_countries String[] @default([])
     target_intake             String?
     budget_range              String?
+    eligible_programs         String[] @default([]) @db.ObjectId // References to Program IDs
 }
 
 model Program {
@@ -84,8 +90,8 @@ model Program {
 
 type EnglishRequirements {
     ielts Float
-    toefl Float  
-    pte   Float  
+    toefl Float
+    pte   Float
 }
 
 type Message {

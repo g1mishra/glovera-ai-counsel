@@ -10,10 +10,20 @@ import { useSession } from "next-auth/react";
 const baseFormSchema = z.object({
   undergraduate_degree: z.string().min(1, "Degree is required"),
   university: z.string().min(1, "University is required"),
-  gpa: z.string().refine((val) => {
+  gpa: z.string().optional(),
+  percentage: z.string().refine((val) => {
     const num = parseFloat(val);
-    return !isNaN(num) && num >= 0 && num <= 4;
-  }, "GPA must be between 0 and 4"),
+    return !isNaN(num) && num >= 0 && num <= 100;
+  }, "Percentage must be between 0 and 100"),
+  backlogs: z.string().refine((val) => {
+    const num = parseInt(val);
+    return !isNaN(num) && num >= 0;
+  }, "Backlogs must be a non-negative number"),
+  naac_grade: z.string().optional(),
+  program_type: z.string().min(1, "Program type is required"),
+  intake_preference: z
+    .array(z.string())
+    .min(1, "Select at least one intake preference"),
   language_proficiency: z.object({
     test_type: z.string().min(1, "Test type is required"),
     overall_score: z.string().min(1, "Score is required"),
@@ -35,6 +45,31 @@ export const STUDY_COUNTRIES = [
   "United States",
   "United Kingdom",
   "Canada",
+] as const;
+
+export const PROGRAM_TYPES = [
+  "Masters",
+  "PhD",
+  "Graduate Certificate",
+  "Diploma",
+] as const;
+
+export const INTAKE_PREFERENCES = [
+  "Fall",
+  "Spring",
+  "Summer",
+  "Winter",
+] as const;
+
+export const NAAC_GRADES = [
+  "A++",
+  "A+",
+  "A",
+  "B++",
+  "B+",
+  "B",
+  "C",
+  "Not Applicable",
 ] as const;
 
 export const INTAKE_OPTIONS = [
@@ -62,6 +97,7 @@ export const BUDGET_RANGES = [
     label: "Above ₹50,00,000 per year",
   },
 ] as const;
+
 interface FormErrors {
   [key: string]: string;
 }
@@ -87,12 +123,19 @@ export default function StudentProfileForm({
     name: user.name ?? "",
     undergraduate_degree: user.profile?.undergraduate_degree ?? "",
     university: user.profile?.university ?? "",
-    gpa: user.profile?.gpa ?? "",
+    gpa: user.profile?.gpa?.toString() ?? "",
+    percentage: user.profile?.percentage?.toString() ?? "",
+    backlogs: user.profile?.backlogs?.toString() ?? "0",
+    naac_grade: user.profile?.naac_grade ?? "",
+    program_type: user.profile?.program_type ?? "",
+    intake_preference: user.profile?.intake_preference ?? [],
     language_proficiency: {
-      test_type: user.profile?.language_proficiency?.test_type ?? "",
-      overall_score: user.profile?.language_proficiency?.overall_score ?? "",
+      test_type: (user.profile?.language_proficiency as any).test_type ?? "",
+      overall_score:
+        (user.profile?.language_proficiency as any)?.overall_score ?? "",
     },
-    work_experience_years: user.profile?.work_experience_years ?? "0",
+    work_experience_years:
+      user.profile?.work_experience_years?.toString() ?? "0",
     technical_skills: user.profile?.technical_skills ?? [],
     preferred_study_countries: user.profile?.preferred_study_countries ?? [],
     target_intake: user.profile?.target_intake ?? "",
@@ -145,13 +188,22 @@ export default function StudentProfileForm({
         body: JSON.stringify({
           undergraduate_degree: formData.undergraduate_degree,
           university: formData.university,
-          gpa: formData.gpa,
+          gpa: formData.gpa ? parseFloat(formData.gpa) : null,
+          percentage: formData.percentage
+            ? parseFloat(formData.percentage)
+            : null,
+          backlogs: parseInt(formData.backlogs),
+          naac_grade: formData.naac_grade,
+          program_type: formData.program_type,
+          intake_preference: formData.intake_preference,
           language_proficiency: {
             test_type: formData.language_proficiency.test_type,
-            overall_score: formData.language_proficiency.overall_score,
+            overall_score: parseFloat(
+              formData.language_proficiency.overall_score
+            ),
           },
-          work_experience_years: formData.work_experience_years,
-          technical_skills: formData?.technical_skills || [],
+          work_experience_years: parseInt(formData.work_experience_years),
+          technical_skills: formData.technical_skills || [],
           preferred_study_countries: formData.preferred_study_countries,
           target_intake: formData.target_intake,
           budget_range: formData.budget_range,
@@ -177,8 +229,6 @@ export default function StudentProfileForm({
           : "Profile updated successfully"
       );
 
-      console.log("Profile saved successfully", mode);
-
       if (onComplete) {
         onComplete();
         router.refresh();
@@ -195,12 +245,16 @@ export default function StudentProfileForm({
     }
   };
 
-  const handleCountryChange = (country: string, checked: boolean) => {
-    setFormData((prev) => ({
+  const handleArrayChange = (
+    field: string,
+    value: string,
+    checked: boolean
+  ) => {
+    setFormData((prev: any) => ({
       ...prev,
-      preferred_study_countries: checked
-        ? [...prev.preferred_study_countries, country]
-        : prev.preferred_study_countries.filter((c) => c !== country),
+      [field]: checked
+        ? [...prev[field], value]
+        : prev[field].filter((item: string) => item !== value),
     }));
   };
 
@@ -295,7 +349,6 @@ export default function StudentProfileForm({
           <input
             id="gpa"
             type="number"
-            required
             step="0.01"
             min="0"
             max="4"
@@ -307,6 +360,109 @@ export default function StudentProfileForm({
           />
           {errors.gpa && (
             <p className="text-red-500 text-sm mt-1">{errors.gpa}</p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="percentage"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Percentage
+          </label>
+          <input
+            id="percentage"
+            type="number"
+            step="0.01"
+            min="0"
+            max="100"
+            required
+            value={formData.percentage}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, percentage: e.target.value }))
+            }
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          />
+          {errors.percentage && (
+            <p className="text-red-500 text-sm mt-1">{errors.percentage}</p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="backlogs"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Number of Backlogs
+          </label>
+          <input
+            id="backlogs"
+            type="number"
+            min="0"
+            required
+            value={formData.backlogs}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, backlogs: e.target.value }))
+            }
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          />
+          {errors.backlogs && (
+            <p className="text-red-500 text-sm mt-1">{errors.backlogs}</p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="naac_grade"
+            className="block text-sm font-medium text-gray-700"
+          >
+            NAAC Grade
+          </label>
+          <select
+            id="naac_grade"
+            value={formData.naac_grade}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, naac_grade: e.target.value }))
+            }
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          >
+            <option value="">Select NAAC grade</option>
+            {NAAC_GRADES.map((grade) => (
+              <option key={grade} value={grade}>
+                {grade}
+              </option>
+            ))}
+          </select>
+          {errors.naac_grade && (
+            <p className="text-red-500 text-sm mt-1">{errors.naac_grade}</p>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="program_type"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Program Type
+          </label>
+          <select
+            id="program_type"
+            required
+            value={formData.program_type}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, program_type: e.target.value }))
+            }
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+          >
+            <option value="">Select program type</option>
+            {PROGRAM_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+          {errors.program_type && (
+            <p className="text-red-500 text-sm mt-1">{errors.program_type}</p>
           )}
         </div>
 
@@ -337,9 +493,9 @@ export default function StudentProfileForm({
             <option value="TOEFL">TOEFL</option>
             <option value="PTE">PTE</option>
           </select>
-          {errors.language_proficiency && (
+          {errors["language_proficiency.test_type"] && (
             <p className="text-red-500 text-sm mt-1">
-              {errors.language_proficiency}
+              {errors["language_proficiency.test_type"]}
             </p>
           )}
         </div>
@@ -353,7 +509,8 @@ export default function StudentProfileForm({
           </label>
           <input
             id="test_score"
-            type="text"
+            type="number"
+            step="0.1"
             required
             placeholder="Overall score"
             value={formData.language_proficiency.overall_score}
@@ -368,9 +525,9 @@ export default function StudentProfileForm({
             }
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
           />
-          {errors.language_proficiency && (
+          {errors["language_proficiency.overall_score"] && (
             <p className="text-red-500 text-sm mt-1">
-              {errors.language_proficiency}
+              {errors["language_proficiency.overall_score"]}
             </p>
           )}
         </div>
@@ -404,10 +561,37 @@ export default function StudentProfileForm({
       </div>
 
       <div>
-        <label
-          htmlFor="preferred_study_countries"
-          className="block text-sm font-medium text-gray-700 mb-2"
-        >
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Intake Preferences
+        </label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {INTAKE_PREFERENCES.map((intake) => (
+            <label key={intake} className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={formData.intake_preference.includes(intake)}
+                onChange={(e) =>
+                  handleArrayChange(
+                    "intake_preference",
+                    intake,
+                    e.target.checked
+                  )
+                }
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm text-gray-700">{intake}</span>
+            </label>
+          ))}
+        </div>
+        {errors.intake_preference && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.intake_preference}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           Preferred Study Countries
         </label>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -416,7 +600,13 @@ export default function StudentProfileForm({
               <input
                 type="checkbox"
                 checked={formData.preferred_study_countries.includes(country)}
-                onChange={(e) => handleCountryChange(country, e.target.checked)}
+                onChange={(e) =>
+                  handleArrayChange(
+                    "preferred_study_countries",
+                    country,
+                    e.target.checked
+                  )
+                }
                 className="rounded border-gray-300"
               />
               <span className="text-sm text-gray-700">{country}</span>
@@ -463,7 +653,7 @@ export default function StudentProfileForm({
           htmlFor="budget_range"
           className="block text-sm font-medium text-gray-700"
         >
-          Annual Budget (USD)
+          Annual Budget (INR)
         </label>
         <select
           id="budget_range"

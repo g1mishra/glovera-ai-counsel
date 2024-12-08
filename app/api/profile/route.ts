@@ -6,21 +6,26 @@ import { authOptions } from "../auth/authOptions";
 const ProfileSchema = z.object({
   undergraduate_degree: z.string().min(1, "Degree is required"),
   university: z.string().min(1, "University is required"),
-  gpa: z.string().refine((val) => {
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= 0 && num <= 4;
-  }, "GPA must be between 0 and 4"),
-
+  gpa: z.number().min(0).max(4).nullable(),
+  percentage: z.number().min(0).max(100).nullable(),
+  backlogs: z.number().min(0),
+  naac_grade: z.string().nullable(),
+  program_type: z.string().min(1, "Program type is required"),
+  intake_preference: z
+    .array(z.string())
+    .min(1, "Select at least one intake preference"),
   language_proficiency: z.object({
     test_type: z.string().min(1, "Test type is required"),
-    overall_score: z.string().min(1, "Score is required"),
+    overall_score: z.number().min(0, "Score is required"),
   }),
-
-  work_experience_years: z.string(),
+  work_experience_years: z.number().min(0).nullable(),
   technical_skills: z.array(z.string()).optional(),
-  preferred_study_countries: z.array(z.string()).min(1, "Select at least one country"),
+  preferred_study_countries: z
+    .array(z.string())
+    .min(1, "Select at least one country"),
   target_intake: z.string().min(1, "Target intake is required"),
   budget_range: z.string().min(1, "Budget range is required"),
+  eligible_programs: z.array(z.string()).optional(),
 });
 
 export async function POST(request: Request) {
@@ -31,22 +36,46 @@ export async function POST(request: Request) {
     }
 
     const data = await request.json();
-    const validatedData = ProfileSchema.parse(data);
+    const validatedData = ProfileSchema.parse({
+      ...data,
+      gpa: data.gpa ? parseFloat(data.gpa) : null,
+      percentage: data.percentage ? parseFloat(data.percentage) : null,
+      backlogs: parseInt(data.backlogs),
+      work_experience_years: data.work_experience_years
+        ? parseInt(data.work_experience_years)
+        : null,
+      language_proficiency: {
+        ...data.language_proficiency,
+        overall_score: parseFloat(data.language_proficiency.overall_score),
+      },
+    });
+
+    console.log(JSON.stringify(session));
 
     const existingProfile = await prisma.profile.findUnique({
       where: { userId: session.user.id },
     });
 
+    const profileData = {
+      ...validatedData,
+      language_proficiency: {
+        test_type: validatedData.language_proficiency.test_type,
+        overall_score: validatedData.language_proficiency.overall_score,
+      },
+    };
+
+    console.log("profileData", profileData);
+
     let profile;
     if (existingProfile) {
       profile = await prisma.profile.update({
         where: { userId: session.user.id },
-        data: validatedData,
+        data: profileData,
       });
     } else {
       profile = await prisma.profile.create({
         data: {
-          ...validatedData,
+          ...profileData,
           userId: session.user.id,
         },
       });
