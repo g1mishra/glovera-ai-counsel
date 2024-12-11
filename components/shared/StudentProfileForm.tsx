@@ -23,7 +23,7 @@ const baseFormSchema = z.object({
   program_type: z.string().min(1, "Program type is required"),
   language_proficiency: z.object({
     test_type: z.string().min(1, "Test type is required"),
-    overall_score: z.string().min(1, "Score is required"),
+    overall_score: z.number().min(1, "Score is required"),
   }),
   work_experience_years: z.string(),
   technical_skills: z.array(z.string()).optional(),

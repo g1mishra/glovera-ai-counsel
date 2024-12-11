@@ -88,17 +88,22 @@ export const authOptions: NextAuthOptions = {
               id: profile.id,
               userId: profile.userId,
               undergraduate_degree: profile.undergraduate_degree,
-              university: profile?.university,
-              gpa: profile?.gpa,
-              language_proficiency: profile?.language_proficiency as {
+              university: profile.university,
+              gpa: profile.gpa,
+              percentage: profile.percentage,
+              backlogs: profile.backlogs,
+              naac_grade: profile.naac_grade,
+              program_type: profile.program_type,
+              language_proficiency: profile.language_proficiency as {
                 test_type: string;
                 overall_score: string;
               } | null,
-              work_experience_years: profile?.work_experience_years,
-              technical_skills: profile?.technical_skills,
-              preferred_study_countries: profile?.preferred_study_countries,
-              target_intake: profile?.target_intake,
-              budget_range: profile?.budget_range,
+              work_experience_years: profile.work_experience_years,
+              technical_skills: profile.technical_skills,
+              preferred_study_countries: profile.preferred_study_countries,
+              target_intake: profile.target_intake,
+              budget_range: profile.budget_range,
+              eligible_programs: profile.eligible_programs,
             };
           }
         } catch (error) {

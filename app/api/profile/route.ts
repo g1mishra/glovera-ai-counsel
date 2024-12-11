@@ -31,13 +31,6 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    try {
-      await prisma.$connect();
-    } catch (connError) {
-      console.error("Prisma connection error:", connError);
-      return Response.json({ error: "Database connection failed" }, { status: 500 });
-    }
-
     const data = await request.json();
 
     const validatedData = ProfileSchema.parse({
@@ -54,58 +47,42 @@ export async function POST(request: Request) {
       },
     });
 
-    try {
-      // Explicitly check if ID is valid MongoDB ObjectId
-      if (!session.user.id.match(/^[0-9a-fA-F]{24}$/)) {
-        throw new Error("Invalid ObjectId format");
-      }
+    // Explicitly check if ID is valid MongoDB ObjectId
+    if (!session.user.id.match(/^[0-9a-fA-F]{24}$/)) {
+      throw new Error("Invalid ObjectId format");
+    }
 
-      const existingProfile = await prisma.profile.findUnique({
-        where: {
+    const existingProfile = await prisma.profile.findUnique({
+      where: {
+        userId: session.user.id,
+      },
+      select: { id: true }, // Only select ID first to verify query works
+    });
+
+    const profileData = {
+      ...validatedData,
+      language_proficiency: {
+        test_type: validatedData.language_proficiency.test_type,
+        overall_score: validatedData.language_proficiency.overall_score,
+      },
+    };
+
+    let profile;
+    if (existingProfile) {
+      profile = await prisma.profile.update({
+        where: { userId: session.user.id },
+        data: profileData,
+      });
+    } else {
+      profile = await prisma.profile.create({
+        data: {
+          ...profileData,
           userId: session.user.id,
         },
-        select: { id: true }, // Only select ID first to verify query works
       });
-
-      const profileData = {
-        ...validatedData,
-        language_proficiency: {
-          test_type: validatedData.language_proficiency.test_type,
-          overall_score: validatedData.language_proficiency.overall_score,
-        },
-      };
-
-      let profile;
-      if (existingProfile) {
-        profile = await prisma.profile.update({
-          where: { userId: session.user.id },
-          data: profileData,
-        });
-      } else {
-        profile = await prisma.profile.create({
-          data: {
-            ...profileData,
-            userId: session.user.id,
-          },
-        });
-      }
-
-      return Response.json({ success: true, data: profile });
-    } catch (dbError) {
-      console.error("Full database error:", dbError);
-      if (dbError instanceof Prisma.PrismaClientKnownRequestError) {
-        console.error("Prisma error code:", dbError.code);
-        console.error("Prisma error meta:", dbError.meta);
-      }
-      return Response.json(
-        {
-          success: false,
-          error: "Database operation failed",
-          details: dbError instanceof Error ? dbError.message : "Unknown error",
-        },
-        { status: 500 }
-      );
     }
+
+    return Response.json({ success: true, data: profile });
   } catch (error) {
     console.error("Profile update error:", error);
 
@@ -141,26 +118,16 @@ export async function GET() {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Add connection check
-    try {
-      await prisma.$connect();
+    const profile = await prisma.profile.findUnique({
+      where: {
+        userId: session.user.id,
+      },
+    });
 
-      const profile = await prisma.profile.findUnique({
-        where: {
-          userId: session.user.id,
-        },
-      });
-
-      console.log("GET query result:", profile);
-
-      return Response.json({
-        success: true,
-        data: profile,
-      });
-    } catch (dbError) {
-      console.error("Database error in GET:", dbError);
-      throw dbError;
-    }
+    return Response.json({
+      success: true,
+      data: profile,
+    });
   } catch (error) {
     console.error("Profile fetch error:", error);
     return Response.json(
