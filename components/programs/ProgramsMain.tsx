@@ -6,13 +6,18 @@ import Pagination from "../Pagination";
 import ProgramList from "./ProgramList";
 import SearchBar from "./SearchBar";
 
-const ProgramsMain = ({ programs: initialPrograms, pagination }: ProgramsMainProps) => {
+const ProgramsMain = ({
+  programs: initialPrograms,
+  pagination: initialPagination,
+}: ProgramsMainProps) => {
   const [programs, setPrograms] = useState(initialPrograms);
+  const [pagination, setPagination] = useState(initialPagination);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     setPrograms(initialPrograms);
+    setPagination(initialPagination);
   }, [initialPrograms]);
 
   const fetchPrograms = async (query: string = "", filters: ProgramFilterParams = {}) => {
@@ -24,11 +29,7 @@ const ProgramsMain = ({ programs: initialPrograms, pagination }: ProgramsMainPro
       if (query) params.append("query", query);
       if (filters.degree_type) params.append("degree_type", filters.degree_type);
       if (filters.location) params.append("location", filters.location);
-      if (filters.duration) params.append("duration", filters.duration);
-      if (filters.tuition_range) {
-        params.append("min_tuition", filters.tuition_range.min.toString());
-        params.append("max_tuition", filters.tuition_range.max.toString());
-      }
+      if (filters.budget_range) params.append("budget_range", filters.budget_range);
 
       const response = await fetch(`/api/programs?${params.toString()}`, {
         cache: "no-store",
@@ -41,6 +42,7 @@ const ProgramsMain = ({ programs: initialPrograms, pagination }: ProgramsMainPro
 
       const data = await response.json();
       setPrograms(data?.programs || []);
+      setPagination(data?.pagination || {});
     } catch (err) {
       setError("Failed to load programs. Please try again.");
     } finally {

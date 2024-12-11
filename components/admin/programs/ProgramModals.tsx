@@ -12,15 +12,15 @@ import {
   Loader2,
 } from "lucide-react";
 import Modal from "@/components/common/Modal";
-import { Program } from "@/types";
 import { getBasePath } from "@/utils/getBasePath";
 import toast from "react-hot-toast";
+import { ProgramsGloveraFinal } from "@prisma/client";
 
 type ProgramModalsProps = {
   isAddModalOpen: boolean;
   onCloseAddModal: (shouldRefetch?: boolean) => void;
   mode?: "edit" | "add";
-  programData?: Program;
+  programData?: ProgramsGloveraFinal;
 };
 
 const InputField = ({ label, icon: Icon, error, ...props }: any) => (
@@ -100,21 +100,16 @@ export const AddProgramModal = ({
     const newErrors: any = {};
 
     // Required fields
-    if (!formData.course_name?.trim())
-      newErrors.course_name = "Course name is required";
-    if (!formData.degree_type?.trim())
-      newErrors.degree_type = "Degree type is required";
-    if (!formData.tuition_fee)
-      newErrors.tuition_fee = "Tuition fee is required";
+    if (!formData.course_name?.trim()) newErrors.course_name = "Course name is required";
+    if (!formData.degree_type?.trim()) newErrors.degree_type = "Degree type is required";
+    if (!formData.tuition_fee) newErrors.tuition_fee = "Tuition fee is required";
     if (!formData.duration?.trim()) newErrors.duration = "Duration is required";
     if (!formData.university_name?.trim())
       newErrors.university_name = "University name is required";
     if (!formData.university_location?.trim())
       newErrors.university_location = "University location is required";
-    if (!formData.start_date?.trim())
-      newErrors.start_date = "Start date is required";
-    if (!formData.apply_date?.trim())
-      newErrors.apply_date = "Application deadline is required";
+    if (!formData.start_date?.trim()) newErrors.start_date = "Start date is required";
+    if (!formData.apply_date?.trim()) newErrors.apply_date = "Application deadline is required";
 
     // Number validations
     if (formData.tuition_fee && isNaN(Number(formData.tuition_fee))) {
@@ -145,18 +140,14 @@ export const AddProgramModal = ({
     }
 
     setIsSubmitting(true);
-    const toastId = toast.loading(
-      mode === "edit" ? "Updating program..." : "Adding program..."
-    );
+    const toastId = toast.loading(mode === "edit" ? "Updating program..." : "Adding program...");
 
     try {
       const transformedData = {
         ...formData,
         tuition_fee: Number(formData.tuition_fee),
         min_gpa: formData.min_gpa ? Number(formData.min_gpa) : null,
-        work_experience: formData.work_experience
-          ? Number(formData.work_experience)
-          : null,
+        work_experience: formData.work_experience ? Number(formData.work_experience) : null,
         english_requirments: {
           ielts: formData.english_requirments.ielts
             ? Number(formData.english_requirments.ielts)
@@ -164,9 +155,7 @@ export const AddProgramModal = ({
           toefl: formData.english_requirments.toefl
             ? Number(formData.english_requirments.toefl)
             : null,
-          pte: formData.english_requirments.pte
-            ? Number(formData.english_requirments.pte)
-            : null,
+          pte: formData.english_requirments.pte ? Number(formData.english_requirments.pte) : null,
         },
       };
 
@@ -189,21 +178,16 @@ export const AddProgramModal = ({
       }
 
       toast.success(
-        mode === "edit"
-          ? "Program updated successfully"
-          : "New program added successfully",
+        mode === "edit" ? "Program updated successfully" : "New program added successfully",
         { id: toastId }
       );
 
       onCloseAddModal(true);
     } catch (error) {
       console.error(`Error ${mode}ing program:`, error);
-      toast.error(
-        mode === "edit" ? "Failed to update program" : "Failed to add program",
-        {
-          id: toastId,
-        }
-      );
+      toast.error(mode === "edit" ? "Failed to update program" : "Failed to add program", {
+        id: toastId,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -224,18 +208,14 @@ export const AddProgramModal = ({
             type="text"
             placeholder="Enter course name"
             value={formData.course_name}
-            onChange={(e: any) =>
-              setFormData({ ...formData, course_name: e.target.value })
-            }
+            onChange={(e: any) => setFormData({ ...formData, course_name: e.target.value })}
             error={errors.course_name}
           />
           <SelectField
             label="Degree Type"
             icon={GraduationCap}
             value={formData.degree_type}
-            onChange={(e: any) =>
-              setFormData({ ...formData, degree_type: e.target.value })
-            }
+            onChange={(e: any) => setFormData({ ...formData, degree_type: e.target.value })}
             error={errors.degree_type}
             options={[
               { value: "", label: "Select degree type" },
@@ -259,9 +239,7 @@ export const AddProgramModal = ({
             type="text"
             placeholder="e.g., 1 year, 2 years"
             value={formData.duration}
-            onChange={(e: any) =>
-              setFormData({ ...formData, duration: e.target.value })
-            }
+            onChange={(e: any) => setFormData({ ...formData, duration: e.target.value })}
             error={errors.duration}
           />
           <InputField
@@ -270,9 +248,7 @@ export const AddProgramModal = ({
             type="number"
             placeholder="Enter tuition fee"
             value={formData.tuition_fee}
-            onChange={(e: any) =>
-              setFormData({ ...formData, tuition_fee: e.target.value })
-            }
+            onChange={(e: any) => setFormData({ ...formData, tuition_fee: e.target.value })}
             error={errors.tuition_fee}
           />
         </div>
@@ -284,9 +260,7 @@ export const AddProgramModal = ({
             type="text"
             placeholder="Enter university name"
             value={formData.university_name}
-            onChange={(e: any) =>
-              setFormData({ ...formData, university_name: e.target.value })
-            }
+            onChange={(e: any) => setFormData({ ...formData, university_name: e.target.value })}
             error={errors.university_name}
           />
           <InputField
@@ -295,9 +269,7 @@ export const AddProgramModal = ({
             type="text"
             placeholder="e.g., London, United Kingdom"
             value={formData.university_location}
-            onChange={(e: any) =>
-              setFormData({ ...formData, university_location: e.target.value })
-            }
+            onChange={(e: any) => setFormData({ ...formData, university_location: e.target.value })}
             error={errors.university_location}
           />
         </div>
@@ -308,9 +280,7 @@ export const AddProgramModal = ({
             icon={Calendar}
             type="date"
             value={formData.start_date}
-            onChange={(e: any) =>
-              setFormData({ ...formData, start_date: e.target.value })
-            }
+            onChange={(e: any) => setFormData({ ...formData, start_date: e.target.value })}
             error={errors.start_date}
           />
           <InputField
@@ -318,9 +288,7 @@ export const AddProgramModal = ({
             icon={Clock}
             type="date"
             value={formData.apply_date}
-            onChange={(e: any) =>
-              setFormData({ ...formData, apply_date: e.target.value })
-            }
+            onChange={(e: any) => setFormData({ ...formData, apply_date: e.target.value })}
             error={errors.apply_date}
           />
         </div>
@@ -328,9 +296,7 @@ export const AddProgramModal = ({
         <div className="space-y-4">
           <div className="flex items-center">
             <Languages className="h-4 w-4 text-gray-500 mr-2" />
-            <h3 className="text-sm font-medium text-gray-700">
-              Language Requirements
-            </h3>
+            <h3 className="text-sm font-medium text-gray-700">Language Requirements</h3>
           </div>
           <div className="grid grid-cols-3 gap-4">
             <InputField
@@ -393,9 +359,7 @@ export const AddProgramModal = ({
             step="0.1"
             placeholder="e.g., 3.0"
             value={formData.min_gpa}
-            onChange={(e: any) =>
-              setFormData({ ...formData, min_gpa: e.target.value })
-            }
+            onChange={(e: any) => setFormData({ ...formData, min_gpa: e.target.value })}
             error={errors.min_gpa}
           />
           <InputField
@@ -404,9 +368,7 @@ export const AddProgramModal = ({
             type="number"
             placeholder="e.g., 2"
             value={formData.work_experience}
-            onChange={(e: any) =>
-              setFormData({ ...formData, work_experience: e.target.value })
-            }
+            onChange={(e: any) => setFormData({ ...formData, work_experience: e.target.value })}
             error={errors.work_experience}
           />
         </div>

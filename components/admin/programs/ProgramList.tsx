@@ -1,12 +1,12 @@
 "use client";
 
-import { Program } from "@/types";
 import { getBasePath } from "@/utils/getBasePath";
 import { Edit, GraduationCap, Loader2, MapPin, Trash2, X } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import AddProgramModal from "./ProgramModals";
 import { useRouter } from "next/navigation";
+import { ProgramsGloveraFinal } from "@prisma/client";
 
 const DeleteAlert = ({
   isOpen,
@@ -18,7 +18,7 @@ const DeleteAlert = ({
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  program: Program | null;
+  program: ProgramsGloveraFinal | null;
   isDeleting: boolean;
 }) => {
   if (!isOpen) return null;
@@ -40,7 +40,7 @@ const DeleteAlert = ({
             <div className="text-center">
               <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Delete Program</h3>
               <p className="text-sm text-gray-500">
-                Are you sure you want to delete "{program?.course_name}"? This action cannot be
+                Are you sure you want to delete "{program?.program_name}"? This action cannot be
                 undone.
               </p>
             </div>
@@ -83,23 +83,23 @@ const ProgramList = ({
   error,
   setPrograms,
 }: {
-  programs: Program[];
+  programs: ProgramsGloveraFinal[];
   loading: boolean;
   error: string;
-  setPrograms: React.Dispatch<React.SetStateAction<Program[]>>;
+  setPrograms: React.Dispatch<React.SetStateAction<ProgramsGloveraFinal[]>>;
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<ProgramsGloveraFinal | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
 
-  const handleEditClick = (program: Program) => {
+  const handleEditClick = (program: ProgramsGloveraFinal) => {
     setSelectedProgram(program);
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteClick = (program: Program) => {
+  const handleDeleteClick = (program: ProgramsGloveraFinal) => {
     setSelectedProgram(program);
     setIsDeleteDialogOpen(true);
   };
@@ -141,25 +141,6 @@ const ProgramList = ({
     }
   };
 
-  const getStatusBadge = (deadline: string, notActive = false) => {
-    const today = new Date();
-    const deadlineDate = new Date(deadline);
-
-    if (notActive || deadlineDate < today) {
-      return { text: "In-Active", classes: "bg-red-100 text-red-800" };
-    }
-
-    const daysUntilDeadline = Math.ceil(
-      (deadlineDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    if (daysUntilDeadline <= 30) {
-      return { text: "Closing Soon", classes: "bg-yellow-100 text-yellow-800" };
-    }
-
-    return { text: "Active", classes: "bg-green-100 text-green-800" };
-  };
-
   return (
     <>
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
@@ -168,11 +149,13 @@ const ProgramList = ({
             <thead>
               <tr className="border-b border-gray-200">
                 <th className="text-left py-4 px-6 font-medium text-gray-500">
-                  Course & University
+                  Program & University
                 </th>
-                <th className="text-left py-4 px-6 font-medium text-gray-500">Location</th>
-                <th className="text-left py-4 px-6 font-medium text-gray-500">Duration & Fees</th>
-                <th className="text-left py-4 px-6 font-medium text-gray-500">Intake & Deadline</th>
+                <th className="text-left py-4 px-6 font-medium text-gray-500">Details</th>
+                <th className="text-left py-4 px-6 font-medium text-gray-500">
+                  Pricing & Duration
+                </th>
+                <th className="text-left py-4 px-6 font-medium text-gray-500">Requirements</th>
                 <th className="text-left py-4 px-6 font-medium text-gray-500">Status</th>
                 <th className="text-right py-4 px-6 font-medium text-gray-500">Actions</th>
               </tr>
@@ -198,45 +181,72 @@ const ProgramList = ({
                   <tr key={program.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">{program.course_name}</span>
+                        <span className="font-medium text-gray-900">{program.program_name}</span>
                         <span className="text-sm text-gray-500 flex items-center mt-1">
                           <GraduationCap className="w-4 h-4 mr-1" />
-                          {program.university_name}
+                          {program.university}
                         </span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex items-center text-gray-500">
-                        <MapPin className="w-4 h-4 mr-1" />
-                        {program.university_location}
+                        <span className="text-xs text-gray-500 mt-1">{program.college}</span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex flex-col">
-                        <span className="text-gray-900">{program.duration}</span>
-                        <span className="text-sm text-gray-500">{program.tuition_fee}</span>
+                        <div className="flex items-center text-gray-500">
+                          <MapPin className="w-4 h-4 mr-1" />
+                          {program.location}
+                        </div>
+                        <span className="text-xs text-gray-500 mt-1">
+                          {program.possible_specializations_or_concentrations ||
+                            "No specializations listed"}
+                        </span>
+                        {program.program_top_usp && (
+                          <span className="text-xs text-blue-600 mt-1">
+                            USP: {program.program_top_usp}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex flex-col">
-                        <span className="text-gray-900">Intake: {program.start_date}</span>
-                        <span className="text-sm text-gray-500">
-                          Deadline: {program.apply_date}
+                        <div className="flex items-center gap-2">
+                          <span className="text-green-600 font-medium">
+                            ₹{program.glovera_pricing}
+                          </span>
+                          <span className="text-xs text-gray-500 line-through">
+                            ₹{program.original_pricing}
+                          </span>
+                        </div>
+                        <span className="text-xs text-green-600">
+                          Save {program.savings_percent}%
+                        </span>
+                        <span className="text-sm text-gray-500 mt-1">
+                          {program.can_finish_in} • {program.total_credits} credits
                         </span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          getStatusBadge(program.apply_date, program.isActive === false)
-                            .classes
-                        }`}
-                      >
-                        {
-                          getStatusBadge(program.apply_date, program.isActive === false)
-                            .text
-                        }
-                      </span>
+                      <div className="flex flex-col text-sm">
+                        <span className="text-gray-600">
+                          Min GPA: {program.min_gpa || "N/A"} ({program.gpa_type || "Not specified"}
+                          )
+                        </span>
+                        <span className="text-gray-600">
+                          Work Exp: {program.min_work_exp || 0}+ years
+                        </span>
+                        {program.backlog !== null && (
+                          <span className="text-gray-600">Max Backlogs: {program.backlog}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col gap-2">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full line-clamp-1 text-xs font-medium bg-blue-100 text-blue-800">
+                          {program.type_of_program || "N/A"}
+                        </span>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          {program.public_private}
+                        </span>
+                      </div>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center justify-end space-x-2">

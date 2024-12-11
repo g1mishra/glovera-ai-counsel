@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { Program } from "@/types";
 import ProgramCard from "./ProgramCard";
+import { ProgramsGloveraFinal } from "@prisma/client";
 
 interface ProgramListProps {
-  programs: Array<Program>;
+  programs: Array<ProgramsGloveraFinal>;
   loading?: boolean;
   error?: string;
 }

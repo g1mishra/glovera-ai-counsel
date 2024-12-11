@@ -7,7 +7,7 @@ import { ProgramFilterParams } from "@/types";
 interface FilterOptions {
   degree_types: string[];
   locations: string[];
-  durations: string[];
+  budget_ranges: string[];
 }
 
 interface SearchBarProps {
@@ -23,7 +23,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onFilter, initialFilter
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
     degree_types: [],
     locations: [],
-    durations: [],
+    budget_ranges: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -97,16 +97,16 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onFilter, initialFilter
           </select>
 
           <select
-            name="duration"
-            value={filters.duration || ""}
+            name="budget_range"
+            value={filters.budget_range || ""}
             onChange={handleFilterChange}
             className="px-3 py-2 border border-gray-300 rounded-lg"
             disabled={loading}
           >
-            <option value="">Duration</option>
-            {filterOptions.durations.map((duration) => (
-              <option key={duration} value={duration}>
-                {duration} {Number(duration) === 1 ? "Year" : "Years"}
+            <option value="">Budget Range</option>
+            {filterOptions.budget_ranges.map((range) => (
+              <option key={range} value={range}>
+                {range}
               </option>
             ))}
           </select>

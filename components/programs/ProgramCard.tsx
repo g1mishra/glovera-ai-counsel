@@ -1,18 +1,12 @@
 "use client";
 
-import React from "react";
-import {
-  Calendar,
-  Clock,
-  IndianRupee,
-  GraduationCap,
-  MapPin,
-} from "lucide-react";
-import { Program } from "@/types";
+import { ProgramsGloveraFinal } from "@prisma/client";
+import { Clock, GraduationCap, IndianRupee, MapPin } from "lucide-react";
 import Link from "next/link";
+import React from "react";
 
 interface ProgramCardProps {
-  program: Program;
+  program: ProgramsGloveraFinal;
 }
 
 const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
@@ -21,46 +15,36 @@ const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
       <div className="flex-grow space-y-4">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="text-xl font-semibold text-gray-900">
-              {program.course_name}
-            </h3>
-            <p className="text-[#FF4B26] font-medium">{program.degree_type}</p>
+            <h3 className="text-xl font-semibold text-gray-900">{program.program_name}</h3>
+            <p className="text-[#FF4B26] font-medium">{program.type_of_program}</p>
           </div>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center text-gray-600">
             <GraduationCap className="w-4 h-4 mr-2" />
-            <span>{program.university_name}</span>
+            <span>{program.university}</span>
           </div>
           <div className="flex items-center text-gray-600">
             <MapPin className="w-4 h-4 mr-2" />
-            <span>{program.university_location}</span>
+            <span>{program.location}</span>
           </div>
           <div className="flex items-center text-gray-600">
             <Clock className="w-4 h-4 mr-2" />
-            <span>{program.duration}</span>
-          </div>
-          <div className="flex items-center text-gray-600">
-            <Calendar className="w-4 h-4 mr-2" />
-            <span>Starts {program.start_date}</span>
+            <span>{program.can_finish_in}</span>
           </div>
           <div className="flex items-center text-gray-600">
             <IndianRupee className="w-4 h-4 mr-2" />
-            <span>{program.tuition_fee}</span>
+            <span>{program.glovera_pricing.toLocaleString()} INR</span>
           </div>
         </div>
 
         <div className="space-y-2">
           <h4 className="font-medium text-gray-900">Key Requirements:</h4>
           <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
-            {program.min_gpa && <li>Minimum GPA: {program.min_gpa}</li>}
-            {program.english_requirments.ielts && (
-              <li>{program.english_requirments.ielts}</li>
-            )}
-            {program.work_experience && (
-              <li>{program.work_experience} work experience</li>
-            )}
+            <li>Minimum GPA: {program.min_gpa}%</li>
+            <li>Work Experience: {program.min_work_exp} years</li>
+            <li>Backlogs: {program.backlog}</li>
           </ul>
         </div>
       </div>

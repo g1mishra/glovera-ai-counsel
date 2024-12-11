@@ -7,107 +7,91 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get("query") || "";
     const degreeType = searchParams.get("degree_type");
     const location = searchParams.get("location");
-    const duration = searchParams.get("duration");
     const minTuition = searchParams.get("min_tuition");
     const maxTuition = searchParams.get("max_tuition");
-
     const programId = searchParams.get("programId");
+    const budgetRange = searchParams.get("budget_range");
 
+    // Single program fetch
+    if (programId) {
+      const program = await prisma.programsGloveraFinal.findUnique({
+        where: { id: programId },
+      });
+
+      if (!program) {
+        return Response.json({ error: "Program not found" }, { status: 404 });
+      }
+      return Response.json(program);
+    }
+
+    // Pagination
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "9", 10);
     const skip = (page - 1) * limit;
 
+    // Filters
     const where: any = {
-      OR: [{ course_name: { contains: query, mode: "insensitive" } }],
+      OR: [
+        { program_name: { contains: query, mode: "insensitive" } },
+        { university: { contains: query, mode: "insensitive" } },
+      ],
     };
 
     if (degreeType) {
-      where.degree_type = degreeType;
+      where.type_of_program = degreeType;
     }
 
     if (location) {
-      where.university_location = { contains: location, mode: "insensitive" };
+      where.location = { contains: location, mode: "insensitive" };
     }
 
-    if (duration) {
-      where.duration = duration;
+    // Price range filter
+    if (minTuition || maxTuition) {
+      where.glovera_pricing = {};
+      if (minTuition) where.glovera_pricing.gte = parseInt(minTuition);
+      if (maxTuition) where.glovera_pricing.lte = parseInt(maxTuition);
     }
 
-    if (minTuition && maxTuition) {
-      where.tuition_fee = {
-        gte: parseInt(minTuition, 10),
-        lte: parseInt(maxTuition, 10),
-      };
-    }
+    if (budgetRange) {
+      const [min, max] = budgetRange.split(" - ").map((val) => {
+        return parseInt(val.replace(/[k$]/g, "000").replace(/\D/g, ""));
+      });
 
-    if (programId) {
-      try {
-        where.id = programId;
-        const program = await prisma.program.findUnique({
-          where,
-        });
+      where.glovera_pricing = {};  // Initialize the object first
 
-        return new Response(JSON.stringify({ program: program || null }), {
-          headers: { "Content-Type": "application/json" },
-        });
-      } catch (error) {
-        console.error("Error fetching program:", error);
-        return new Response(
-          JSON.stringify({ error: "Failed to fetch program" }),
-          {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-      }
-    } else {
-      try {
-        const total = await prisma.program.count({ where });
-
-        const programs = await prisma.program.findMany({
-          where,
-          orderBy: [
-            {
-              updatedAt: "desc",
-            },
-            { id: "asc" },
-          ],
-
-          skip,
-          take: limit,
-        });
-
-        return new Response(
-          JSON.stringify({
-            programs: programs || [],
-            pagination: {
-              total,
-              page,
-              limit,
-              totalPages: Math.ceil(total / limit),
-            },
-          }),
-          {
-            headers: { "Content-Type": "application/json" },
-          }
-        );
-      } catch (error) {
-        console.error("Error fetching programs:", error);
-        return new Response(
-          JSON.stringify({ error: "Failed to fetch programs" }),
-          {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          }
-        );
+      if (budgetRange.startsWith("Under")) {
+        where.glovera_pricing.lte = min;
+      } else if (budgetRange.startsWith("Above")) {
+        where.glovera_pricing.gte = min;
+      } else {
+        where.glovera_pricing.gte = min;
+        where.glovera_pricing.lte = max;
       }
     }
+
+    const total = await prisma.programsGloveraFinal.count({ where });
+
+    const programs = await prisma.programsGloveraFinal.findMany({
+      where,
+      orderBy: [{ ranking: "asc" }, { university: "asc" }],
+      skip,
+      take: limit,
+    });
+
+    const responseData = {
+      programs: programs || [],
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+
+    return Response.json(responseData);
   } catch (error) {
     console.error("Error fetching programs:", error);
-    return new Response(JSON.stringify({ error: "Failed to fetch programs" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return Response.json({ error: "Failed to fetch programs" }, { status: 500 });
   }
 }
 
@@ -115,122 +99,13 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
 
-    const requiredFields = [
-      "course_name",
-      "degree_type",
-      "tuition_fee",
-      "duration",
-      "university_name",
-      "university_location",
-      "start_date",
-      "apply_date",
-    ];
-
-    const missingFields = requiredFields.filter((field) => !data[field]);
-    if (missingFields.length > 0) {
-      return Response.json(
-        {
-          error: "Missing required fields",
-          fields: missingFields,
-        },
-        { status: 400 }
-      );
-    }
-
-    const program = await prisma.program.create({
-      data: {
-        course_name: data.course_name,
-        degree_type: data.degree_type,
-        tuition_fee: data.tuition_fee,
-        duration: data.duration,
-        university_name: data.university_name,
-        university_location: data.university_location,
-        start_date: data.start_date,
-        apply_date: data.apply_date,
-        english_requirments: data.english_requirments || null,
-        min_gpa: data.min_gpa || null,
-        work_experience: data.work_experience || null,
-        isActive: true,
-        tuition_fee_currency: data?.tuition_fee_currency || "INR",
-      },
+    const program = await prisma.programsGloveraFinal.create({
+      data,
     });
 
     return Response.json(program, { status: 201 });
   } catch (error) {
     console.error("Error creating program:", error);
-    return Response.json(
-      { error: "Failed to create program" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PUT(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-
-    if (!id) {
-      return Response.json(
-        { error: "Program ID is required" },
-        { status: 400 }
-      );
-    }
-
-    const data = await request.json();
-
-    const program = await prisma.program.update({
-      where: { id },
-      data: {
-        course_name: data.course_name,
-        degree_type: data.degree_type,
-        tuition_fee: data.tuition_fee,
-        duration: data.duration,
-        university_name: data.university_name,
-        university_location: data.university_location,
-        start_date: data.start_date,
-        apply_date: data.apply_date,
-        english_requirments: data.english_requirments,
-        min_gpa: data.min_gpa,
-        work_experience: data.work_experience,
-      },
-    });
-
-    return Response.json(program);
-  } catch (error) {
-    console.error("Error updating program:", error);
-    return Response.json(
-      { error: "Failed to update program" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
-
-    if (!id) {
-      return Response.json(
-        { error: "Program ID is required" },
-        { status: 400 }
-      );
-    }
-
-    await prisma.program.delete({
-      where: { id },
-    });
-
-    return Response.json(
-      { message: "Program deleted successfully" },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Error deleting program:", error);
-    return Response.json(
-      { error: "Failed to delete program" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to create program" }, { status: 500 });
   }
 }

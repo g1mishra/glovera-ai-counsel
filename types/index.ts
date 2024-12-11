@@ -1,28 +1,4 @@
-import { Profile } from "@prisma/client";
-
-export interface Program {
-  id: string;
-  course_name: string;
-  degree_type: string;
-  tuition_fee: string;
-  duration: string;
-  university_name: string;
-  university_location: string;
-  program_url: string;
-  start_date: string;
-  apply_date: string;
-  isActive?: boolean;
-  english_requirments: {
-    ielts: number;
-    toefl: number;
-    pte: number;
-  };
-  min_gpa: number;
-  work_experience: number;
-  createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
-  program_description?: string;
-}
+import { Profile, ProgramsGloveraFinal } from "@prisma/client";
 
 export interface User {
   id: string;
@@ -50,12 +26,8 @@ export interface NavItem {
 
 export interface ProgramFilterParams {
   degree_type?: string;
-  duration?: string;
   location?: string;
-  tuition_range?: {
-    min: number;
-    max: number;
-  };
+  budget_range?: string;
 }
 
 export interface ConsultationBooking {
@@ -119,12 +91,12 @@ export interface PaginatedResponse<T> {
 }
 
 export interface ProgramCardProps {
-  program: Program;
+  program: ProgramsGloveraFinal;
   onApply?: (programId: string) => void;
 }
 
 export interface ProgramListProps {
-  programs: Array<Program>;
+  programs: Array<ProgramsGloveraFinal>;
   loading?: boolean;
   error?: string;
 }
@@ -146,7 +118,7 @@ export interface AdminDashboardStats {
   active_consultations: number;
   conversion_rate: number;
   popular_programs: Array<{
-    program: Program;
+    program: ProgramsGloveraFinal;
     applications: number;
   }>;
 }
@@ -186,7 +158,7 @@ export interface Conversation {
 }
 
 export interface ProgramsMainProps {
-  programs: Array<Program>;
+  programs: Array<ProgramsGloveraFinal>;
   pagination: {
     total: number;
     page: number;

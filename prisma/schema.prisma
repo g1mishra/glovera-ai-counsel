@@ -67,24 +67,59 @@ model Profile {
     eligible_programs         String[] @default([]) @db.ObjectId // References to Program IDs
 }
 
-model Program {
-    id                   String              @id @default(auto()) @map("_id") @db.ObjectId
-    course_name          String
-    degree_type          String
-    tuition_fee          Float
-    tuition_fee_currency String              @default("INR")
-    duration             String
-    university_name      String
-    university_location  String
-    program_url          String?
-    english_requirments  EnglishRequirements
-    min_gpa              Float?
-    work_experience      Int?
-    start_date           String
-    apply_date           String
-    createdAt            DateTime            @default(now())
-    updatedAt            DateTime            @updatedAt
-    isActive             Boolean             @default(true)
+model ProgramsGloveraFinal {
+    id                       String  @id @default(auto()) @map("_id") @db.ObjectId
+    ranking                  Int
+    university               String
+    college                  String
+    program_name             String
+    location                 String
+    glovera_pricing          Int
+    original_pricing         Int
+    savings_percent          Float
+    public_private           String
+    key_job_roles            String
+    iit_or_iim               String
+    location_specialty       String?
+    uni_or_college_specialty String?
+
+    possible_specializations_or_concentrations String?
+    program_top_usp                            String?
+    curriculum                                 String?
+    co_op_internship                           String?
+
+    savings               Int
+    total_credits         String
+    credits_in_iit_or_iim String
+    credits_in_us         String
+    can_finish_in         String
+
+    ug_background          String?
+    minimum_qualifications String?
+    design_factor          String?
+
+    transcript_evaluation String?
+    LOR                   String?
+    SOP                   String?
+    interviews            String?
+
+    application_fee                      String?
+    deposit                              Int?
+    deposit_refundable_if_visa_cancelled String?
+
+    co_op                String?
+    key_companies_hiring Json?
+
+    quant_or_qualitative String?
+    min_gpa              Int?
+    gpa_type             String?
+    type_of_program      String?
+    percentage           Int?
+    backlog              Int?
+    min_work_exp         Int?
+    three_year_eleg      String?
+
+    @@map("ProgramsGloveraFinal")
 }
 
 type EnglishRequirements {
