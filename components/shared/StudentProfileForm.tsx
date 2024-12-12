@@ -99,7 +99,7 @@ export default function StudentProfileForm({
     naac_grade: user.profile?.naac_grade ?? "",
     program_type: user.profile?.program_type ?? "",
     language_proficiency: {
-      test_type: (user.profile?.language_proficiency as any).test_type ?? "",
+      test_type: (user.profile?.language_proficiency as any)?.test_type ?? "",
       overall_score: (user.profile?.language_proficiency as any)?.overall_score ?? "",
     },
     work_experience_years: user.profile?.work_experience_years?.toString() ?? "0",

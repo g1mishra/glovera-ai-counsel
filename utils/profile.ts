@@ -10,8 +10,10 @@ export function isProfileComplete(profile?: Profile | null): boolean {
       profile.backlogs !== null &&
       profile.program_type &&
       // Required test scores
-      (profile.language_proficiency as any)?.test_type &&
-      (profile.language_proficiency as any)?.overall_score &&
+      typeof profile.language_proficiency === "object" &&
+      profile.language_proficiency !== null &&
+      "test_type" in profile.language_proficiency &&
+      "overall_score" in profile.language_proficiency &&
       // Required preferences
       profile.preferred_study_countries?.length > 0 &&
       profile.target_intake &&

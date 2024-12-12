@@ -19,14 +19,12 @@ export default async function GetStarted() {
     <div className="bg-white">
       <main className="max-w-7xl mx-auto px-4 p-6">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
-            AI Video Counseling
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900">AI Video Counseling</h1>
           <p className="mt-2 text-lg text-gray-600">
             Connect instantly with our AI counselor for personalized guidance
           </p>
         </div>
-        <AIChat initialAvatarId={null} />
+        <AIChat />
       </main>
     </div>
   );

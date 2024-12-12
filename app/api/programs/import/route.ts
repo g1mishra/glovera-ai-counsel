@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       const savingsPercent = ((savings / originalPrice) * 100).toFixed(2);
 
       return {
-        ranking: program.ranking,
+        ranking: Number(program.ranking),
         university: program.university,
         college: program.college,
         program_name: program.program_name,
@@ -106,14 +106,15 @@ export async function POST(request: NextRequest) {
         public_private: program.public_private,
         location_specialty: program.location_specialty || "",
         uni_or_college_specialty: program.uni_or_college_specialty || "",
-        possible_specializations_or_concentrations: program.possible_specializations_or_concentrations || "",
+        possible_specializations_or_concentrations:
+          program.possible_specializations_or_concentrations || "",
         program_top_usp: program.program_top_usp || "",
         curriculum: program.curriculum || "",
         co_op_internship: program.co_op_internship || "",
         glovera_pricing: gloveraPrice,
         original_pricing: originalPrice,
         savings,
-        savings_percent: `${savingsPercent}%`,
+        savings_percent: parseFloat(savingsPercent),
         total_credits: program.total_credits || "",
         iit_or_iim: program.iit_or_iim || "",
         credits_in_iit_or_iim: program.credits_in_iit_or_iim || "",
@@ -142,15 +143,13 @@ export async function POST(request: NextRequest) {
         percentage: Number(program.percentage) || 0,
         backlog: Number(program.backlog) || 0,
         min_work_exp: Number(program.min_work_exp) || 0,
-        three_year_eleg: program.three_year_eleg || ""
+        three_year_eleg: program.three_year_eleg || "",
       };
     });
 
     // Create programs
     const created = await Promise.all(
-      transformedPrograms.map((program) =>
-        prisma.programsGloveraFinal.create({ data: program })
-      )
+      transformedPrograms.map((program) => prisma.programsGloveraFinal.create({ data: program }))
     );
 
     return NextResponse.json({
