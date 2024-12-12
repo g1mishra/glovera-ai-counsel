@@ -417,26 +417,30 @@ export default function AIChat() {
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
-              >
+            {messages.map((message, index) => {
+              const isLastAiMessage =
+                message.type === "ai" && index === messages.findLastIndex((m) => m.type === "ai");
+
+              return (
                 <div
-                  className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                    message.type === "user"
-                      ? "bg-[#FF4B26] text-white shadow-sm"
-                      : "bg-gray-50 text-gray-800 shadow-sm border border-gray-200"
-                  }`}
+                  key={index}
+                  className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  {message.content}
-                  {/* todo: remove not if API started to send showSchedule, currently not added to test. */}
-                  {message.type === "ai" && !message.showSchedule && conversationId && (
-                    <MessageButtons conversationId={conversationId} />
-                  )}
+                  <div
+                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                      message.type === "user"
+                        ? "bg-[#FF4B26] text-white shadow-sm"
+                        : "bg-gray-50 text-gray-800 shadow-sm border border-gray-200"
+                    }`}
+                  >
+                    {message.content}
+                    {isLastAiMessage && messages.length > 2 && conversationId && (
+                      <MessageButtons conversationId={conversationId} />
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-gray-50 text-gray-800 rounded-lg p-4 shadow">Processing...</div>
