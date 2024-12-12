@@ -44,27 +44,4 @@ const ProgramHeader = () => {
   );
 };
 
-interface StatCardProps {
-  title: string;
-  value: string;
-  trend: string;
-  trendUp: boolean | null;
-}
-
-const StatCard = ({ title, value, trend, trendUp }: StatCardProps) => (
-  <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-    <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-    <div className="mt-2 flex items-baseline">
-      <p className="text-2xl font-semibold text-gray-900">{value}</p>
-      <span
-        className={`ml-2 text-xs ${
-          trendUp === null ? "text-gray-500" : trendUp ? "text-green-600" : "text-red-600"
-        }`}
-      >
-        {trend}
-      </span>
-    </div>
-  </div>
-);
-
 export default ProgramHeader;
