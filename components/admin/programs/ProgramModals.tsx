@@ -68,23 +68,48 @@ export const AddProgramModal = ({
   programData,
 }: ProgramModalsProps) => {
   const [formData, setFormData] = useState<any>({
-    course_name: "",
-    degree_type: "",
-    duration: "",
-    tuition_fee: "",
-    tuition_fee_currency: "INR",
-    university_name: "",
-    university_location: "",
-    start_date: "",
-    apply_date: "",
-    english_requirments: {
-      ielts: null,
-      toefl: null,
-      pte: null,
-    },
-    min_gpa: null,
-    work_experience: null,
-    isActive: true,
+    ranking: 0,
+    university: "",
+    college: "",
+    program_name: "",
+    location: "",
+    glovera_pricing: 0,
+    original_pricing: 0,
+    savings_percent: 0,
+    public_private: "",
+    key_job_roles: "",
+    iit_or_iim: "",
+    location_specialty: "",
+    uni_or_college_specialty: "",
+    possible_specializations_or_concentrations: "",
+    program_top_usp: "",
+    curriculum: "",
+    co_op_internship: "",
+    savings: 0,
+    total_credits: "",
+    credits_in_iit_or_iim: "",
+    credits_in_us: "",
+    can_finish_in: "",
+    ug_background: "",
+    minimum_qualifications: "",
+    design_factor: "",
+    transcript_evaluation: "",
+    LOR: "",
+    SOP: "",
+    interviews: "",
+    application_fee: "",
+    deposit: 0,
+    deposit_refundable_if_visa_cancelled: "",
+    co_op: "",
+    key_companies_hiring: {},
+    quant_or_qualitative: "",
+    min_gpa: 0,
+    gpa_type: "",
+    type_of_program: "",
+    percentage: 0,
+    backlog: 0,
+    min_work_exp: 0,
+    three_year_eleg: "",
   });
 
   const [errors, setErrors] = useState<any>({});
@@ -100,31 +125,23 @@ export const AddProgramModal = ({
     const newErrors: any = {};
 
     // Required fields
-    if (!formData.course_name?.trim()) newErrors.course_name = "Course name is required";
-    if (!formData.degree_type?.trim()) newErrors.degree_type = "Degree type is required";
-    if (!formData.tuition_fee) newErrors.tuition_fee = "Tuition fee is required";
-    if (!formData.duration?.trim()) newErrors.duration = "Duration is required";
-    if (!formData.university_name?.trim())
-      newErrors.university_name = "University name is required";
-    if (!formData.university_location?.trim())
-      newErrors.university_location = "University location is required";
-    if (!formData.start_date?.trim()) newErrors.start_date = "Start date is required";
-    if (!formData.apply_date?.trim()) newErrors.apply_date = "Application deadline is required";
+    if (!formData.program_name?.trim()) newErrors.program_name = "Program name is required";
+    if (!formData.university?.trim()) newErrors.university = "University is required";
+    if (!formData.college?.trim()) newErrors.college = "College is required";
+    if (!formData.location?.trim()) newErrors.location = "Location is required";
+    if (!formData.glovera_pricing) newErrors.glovera_pricing = "Glovera pricing is required";
+    if (!formData.original_pricing) newErrors.original_pricing = "Original pricing is required";
+    if (!formData.ranking) newErrors.ranking = "Ranking is required";
 
     // Number validations
-    if (formData.tuition_fee && isNaN(Number(formData.tuition_fee))) {
-      newErrors.tuition_fee = "Must be a valid number";
+    if (formData.glovera_pricing && isNaN(Number(formData.glovera_pricing))) {
+      newErrors.glovera_pricing = "Must be a valid number";
     }
-    if (formData.min_gpa && isNaN(Number(formData.min_gpa))) {
-      newErrors.min_gpa = "Must be a valid number";
+    if (formData.original_pricing && isNaN(Number(formData.original_pricing))) {
+      newErrors.original_pricing = "Must be a valid number";
     }
-    if (formData.work_experience && isNaN(Number(formData.work_experience))) {
-      newErrors.work_experience = "Must be a valid number";
-    }
-
-    // URL validation
-    if (formData.program_url && !formData.program_url.match(/^https?:\/\/.+/)) {
-      newErrors.program_url = "Must be a valid URL";
+    if (formData.ranking && isNaN(Number(formData.ranking))) {
+      newErrors.ranking = "Must be a valid number";
     }
 
     setErrors(newErrors);
@@ -145,18 +162,9 @@ export const AddProgramModal = ({
     try {
       const transformedData = {
         ...formData,
-        tuition_fee: Number(formData.tuition_fee),
-        min_gpa: formData.min_gpa ? Number(formData.min_gpa) : null,
-        work_experience: formData.work_experience ? Number(formData.work_experience) : null,
-        english_requirments: {
-          ielts: formData.english_requirments.ielts
-            ? Number(formData.english_requirments.ielts)
-            : null,
-          toefl: formData.english_requirments.toefl
-            ? Number(formData.english_requirments.toefl)
-            : null,
-          pte: formData.english_requirments.pte ? Number(formData.english_requirments.pte) : null,
-        },
+        glovera_pricing: Number(formData.glovera_pricing),
+        original_pricing: Number(formData.original_pricing),
+        ranking: Number(formData.ranking),
       };
 
       const url =
@@ -203,173 +211,77 @@ export const AddProgramModal = ({
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
         <div className="grid grid-cols-2 gap-6">
           <InputField
-            label="Course Name"
+            label="Program Name"
             icon={School}
             type="text"
-            placeholder="Enter course name"
-            value={formData.course_name}
-            onChange={(e: any) => setFormData({ ...formData, course_name: e.target.value })}
-            error={errors.course_name}
-          />
-          <SelectField
-            label="Degree Type"
-            icon={GraduationCap}
-            value={formData.degree_type}
-            onChange={(e: any) => setFormData({ ...formData, degree_type: e.target.value })}
-            error={errors.degree_type}
-            options={[
-              { value: "", label: "Select degree type" },
-              { value: "Bachelor's", label: "Bachelor's Degree" },
-              { value: "Master's", label: "Master's Degree" },
-              { value: "Doctorate", label: "Doctorate" },
-              { value: "M.B.A.", label: "M.B.A." },
-              { value: "M.Sc.", label: "M.Sc." },
-              { value: "M.A.", label: "M.A." },
-              { value: "LL.M.", label: "LL.M." },
-              { value: "M.Eng.", label: "M.Eng." },
-              { value: "M.Ed.", label: "M.Ed." },
-            ]}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-6">
-          <InputField
-            label="Duration"
-            icon={Calendar}
-            type="text"
-            placeholder="e.g., 1 year, 2 years"
-            value={formData.duration}
-            onChange={(e: any) => setFormData({ ...formData, duration: e.target.value })}
-            error={errors.duration}
+            placeholder="Enter program name"
+            value={formData.program_name}
+            onChange={(e: any) => setFormData({ ...formData, program_name: e.target.value })}
+            error={errors.program_name}
           />
           <InputField
-            label="Tuition Fee (INR)"
-            icon={IndianRupee}
-            type="number"
-            placeholder="Enter tuition fee"
-            value={formData.tuition_fee}
-            onChange={(e: any) => setFormData({ ...formData, tuition_fee: e.target.value })}
-            error={errors.tuition_fee}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-6">
-          <InputField
-            label="University Name"
+            label="University"
             icon={Building}
             type="text"
             placeholder="Enter university name"
-            value={formData.university_name}
-            onChange={(e: any) => setFormData({ ...formData, university_name: e.target.value })}
-            error={errors.university_name}
+            value={formData.university}
+            onChange={(e: any) => setFormData({ ...formData, university: e.target.value })}
+            error={errors.university}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-6">
+          <InputField
+            label="College"
+            icon={Building}
+            type="text"
+            placeholder="Enter college name"
+            value={formData.college}
+            onChange={(e: any) => setFormData({ ...formData, college: e.target.value })}
+            error={errors.college}
           />
           <InputField
-            label="University Location"
+            label="Location"
             icon={MapPin}
             type="text"
-            placeholder="e.g., London, United Kingdom"
-            value={formData.university_location}
-            onChange={(e: any) => setFormData({ ...formData, university_location: e.target.value })}
-            error={errors.university_location}
+            placeholder="Enter location"
+            value={formData.location}
+            onChange={(e: any) => setFormData({ ...formData, location: e.target.value })}
+            error={errors.location}
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-3 gap-6">
           <InputField
-            label="Start Date"
-            icon={Calendar}
-            type="date"
-            value={formData.start_date}
-            onChange={(e: any) => setFormData({ ...formData, start_date: e.target.value })}
-            error={errors.start_date}
+            label="Glovera Pricing"
+            icon={IndianRupee}
+            type="number"
+            placeholder="Enter Glovera pricing"
+            value={formData.glovera_pricing}
+            onChange={(e: any) =>
+              setFormData({ ...formData, glovera_pricing: Number(e.target.value) })
+            }
+            error={errors.glovera_pricing}
           />
           <InputField
-            label="Application Deadline"
-            icon={Clock}
-            type="date"
-            value={formData.apply_date}
-            onChange={(e: any) => setFormData({ ...formData, apply_date: e.target.value })}
-            error={errors.apply_date}
+            label="Original Pricing"
+            icon={IndianRupee}
+            type="number"
+            placeholder="Enter original pricing"
+            value={formData.original_pricing}
+            onChange={(e: any) =>
+              setFormData({ ...formData, original_pricing: Number(e.target.value) })
+            }
+            error={errors.original_pricing}
           />
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center">
-            <Languages className="h-4 w-4 text-gray-500 mr-2" />
-            <h3 className="text-sm font-medium text-gray-700">Language Requirements</h3>
-          </div>
-          <div className="grid grid-cols-3 gap-4">
-            <InputField
-              label="IELTS Score"
-              icon={Languages}
-              type="number"
-              step="0.5"
-              placeholder="e.g., 6.5"
-              value={formData.english_requirments?.ielts}
-              onChange={(e: any) =>
-                setFormData({
-                  ...formData,
-                  english_requirments: {
-                    ...formData.english_requirments,
-                    ielts: e.target.value,
-                  },
-                })
-              }
-            />
-            <InputField
-              label="TOEFL Score"
-              icon={Languages}
-              type="number"
-              placeholder="e.g., 90"
-              value={formData.english_requirments?.toefl}
-              onChange={(e: any) =>
-                setFormData({
-                  ...formData,
-                  english_requirments: {
-                    ...formData.english_requirments,
-                    toefl: e.target.value,
-                  },
-                })
-              }
-            />
-            <InputField
-              label="PTE Score"
-              icon={Languages}
-              type="number"
-              placeholder="e.g., 65"
-              value={formData.english_requirments?.pte}
-              onChange={(e: any) =>
-                setFormData({
-                  ...formData,
-                  english_requirments: {
-                    ...formData.english_requirments,
-                    pte: e.target.value,
-                  },
-                })
-              }
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-6">
           <InputField
-            label="Minimum GPA"
+            label="Ranking"
             icon={GraduationCap}
             type="number"
-            step="0.1"
-            placeholder="e.g., 3.0"
-            value={formData.min_gpa}
-            onChange={(e: any) => setFormData({ ...formData, min_gpa: e.target.value })}
-            error={errors.min_gpa}
-          />
-          <InputField
-            label="Work Experience (Years)"
-            icon={Briefcase}
-            type="number"
-            placeholder="e.g., 2"
-            value={formData.work_experience}
-            onChange={(e: any) => setFormData({ ...formData, work_experience: e.target.value })}
-            error={errors.work_experience}
+            placeholder="Enter ranking"
+            value={formData.ranking}
+            onChange={(e: any) => setFormData({ ...formData, ranking: Number(e.target.value) })}
+            error={errors.ranking}
           />
         </div>
 
