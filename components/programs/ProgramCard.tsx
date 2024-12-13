@@ -1,7 +1,7 @@
 "use client";
 
 import { ProgramsGloveraFinal } from "@prisma/client";
-import { Clock, GraduationCap, IndianRupee, MapPin } from "lucide-react";
+import { Clock, GraduationCap, DollarSign, MapPin } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
@@ -15,8 +15,12 @@ const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
       <div className="flex-grow space-y-4">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="text-xl font-semibold text-gray-900">{program.program_name}</h3>
-            <p className="text-[#FF4B26] font-medium">{program.type_of_program}</p>
+            <h3 className="text-xl font-semibold text-gray-900">
+              {program.program_name}
+            </h3>
+            <p className="text-[#FF4B26] font-medium">
+              {program.type_of_program}
+            </p>
           </div>
         </div>
 
@@ -34,8 +38,8 @@ const ProgramCard: React.FC<ProgramCardProps> = ({ program }) => {
             <span>{program.can_finish_in}</span>
           </div>
           <div className="flex items-center text-gray-600">
-            <IndianRupee className="w-4 h-4 mr-2" />
-            <span>{program.glovera_pricing.toLocaleString()} INR</span>
+            <DollarSign className="w-4 h-4 mr-2" />
+            <span>{program.glovera_pricing.toLocaleString()}</span>
           </div>
         </div>
 

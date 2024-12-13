@@ -10,7 +10,7 @@ import {
   Clock,
   FileText,
   GraduationCap,
-  IndianRupee,
+  DollarSign,
   MapPin,
   Percent,
 } from "lucide-react";
@@ -26,7 +26,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ program }) => {
     <div className="space-y-8 text-gray-900">
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8">
         <div className="container mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">{program.program_name}</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            {program.program_name}
+          </h1>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-gray-600 mb-6">
             <div className="flex items-center">
               <Building className="w-5 h-5 mr-2" />
@@ -53,19 +55,20 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ program }) => {
               <div className="flex flex-col">
                 <span className="text-gray-600">Original Price</span>
                 <span className="text-xl font-bold line-through text-gray-500">
-                  ₹{program.original_pricing.toLocaleString()}
+                  ${program.original_pricing.toLocaleString()}
                 </span>
               </div>
               <div className="flex flex-col">
                 <span className="text-gray-600">Glovera Price</span>
                 <span className="text-xl font-bold text-[#FF4B26]">
-                  ₹{program.glovera_pricing.toLocaleString()}
+                  ${program.glovera_pricing.toLocaleString()}
                 </span>
               </div>
               <div className="flex flex-col">
                 <span className="text-gray-600">Your Savings</span>
                 <span className="text-xl font-bold text-green-600">
-                  ₹{program.savings.toLocaleString()} ({program.savings_percent}%)
+                  ${program.savings.toLocaleString()} ({program.savings_percent}
+                  %)
                 </span>
               </div>
             </div>
@@ -120,9 +123,15 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ program }) => {
               <GraduationCap className="w-5 h-5 text-[#FF4B26] mr-3 mt-1" />
               <div>
                 <h3 className="font-medium">Credits Distribution</h3>
-                <p className="text-gray-600">Total Credits: {program.total_credits}</p>
-                <p className="text-gray-600">IIT/IIM Credits: {program.credits_in_iit_or_iim}</p>
-                <p className="text-gray-600">US Credits: {program.credits_in_us}</p>
+                <p className="text-gray-600">
+                  Total Credits: {program.total_credits}
+                </p>
+                <p className="text-gray-600">
+                  IIT/IIM Credits: {program.credits_in_iit_or_iim}
+                </p>
+                <p className="text-gray-600">
+                  US Credits: {program.credits_in_us}
+                </p>
               </div>
             </div>
             {program.curriculum && (
@@ -150,14 +159,18 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ program }) => {
       </div>
 
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8">
-        <h2 className="text-2xl font-semibold mb-4">Eligibility Requirements</h2>
+        <h2 className="text-2xl font-semibold mb-4">
+          Eligibility Requirements
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {program.minimum_qualifications && (
             <div className="flex items-start">
               <CheckCircle className="w-5 h-5 text-[#FF4B26] mr-3 mt-1" />
               <div>
                 <h3 className="font-medium">Minimum Qualifications</h3>
-                <p className="text-gray-600">{program.minimum_qualifications}</p>
+                <p className="text-gray-600">
+                  {program.minimum_qualifications}
+                </p>
               </div>
             </div>
           )}
@@ -186,7 +199,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ program }) => {
               <CheckCircle className="w-5 h-5 text-[#FF4B26] mr-3 mt-1" />
               <div>
                 <h3 className="font-medium">Work Experience</h3>
-                <p className="text-gray-600">{program.min_work_exp} years minimum</p>
+                <p className="text-gray-600">
+                  {program.min_work_exp} years minimum
+                </p>
               </div>
             </div>
           )}
@@ -194,10 +209,15 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ program }) => {
       </div>
 
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-8">
-        <h2 className="text-2xl font-semibold mb-4">Application Requirements</h2>
+        <h2 className="text-2xl font-semibold mb-4">
+          Application Requirements
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[
-            { label: "Transcript Evaluation", value: program.transcript_evaluation },
+            {
+              label: "Transcript Evaluation",
+              value: program.transcript_evaluation,
+            },
             { label: "Letters of Recommendation", value: program.LOR },
             { label: "Statement of Purpose", value: program.SOP },
             { label: "Interviews", value: program.interviews },
