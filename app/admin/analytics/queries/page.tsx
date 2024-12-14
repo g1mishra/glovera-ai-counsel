@@ -58,7 +58,7 @@ const QueryPatterns = () => {
   if (error) return <div className="text-red-500">{error}</div>;
   if (!data) return null;
 
-  const COLORS = ["#FF4B26", "#FF8C61", "#FFB69E", "#FFE1D6"];
+  const COLORS = ["#FF4B26", "#FFD400", "#00C48C", "#0066FF", "#FF4B26", "#FFD400"];
 
   const processedTopSearches = data.topSearches
     .filter((item) => {
@@ -100,14 +100,14 @@ const QueryPatterns = () => {
         />
         <QueryStatCard
           title="Avg. Search Depth"
-          value={data.stats.avgDepth.toString()}
+          value={data?.stats?.avgDepth?.toString()}
           trend="-0.5"
           description="Messages per conversation"
           icon={TrendingUp}
         />
         <QueryStatCard
           title="User Interactions"
-          value={data.stats.userInteractions.toString()}
+          value={data?.stats?.userInteractions?.toString()}
           trend="+8.4%"
           description="Unique users"
           icon={Users}
@@ -124,12 +124,12 @@ const QueryPatterns = () => {
               <option>Last 7 days</option>
             </select>
           </div>
-          <div className="h-[400px]">
+          <div className="w-full h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={processedTopSearches}
                 layout="vertical"
-                margin={{ top: 5, right: 30, left: 120, bottom: 5 }}
+                margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
               >
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                 <XAxis type="number" />
@@ -147,7 +147,7 @@ const QueryPatterns = () => {
               <p className="text-sm text-gray-500">Distribution of search types</p>
             </div>
           </div>
-          <div className="h-[400px] flex flex-col items-center justify-center">
+          <div className="w-full h-[400px] flex flex-col items-center justify-center">
             {activeCategories.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -157,7 +157,7 @@ const QueryPatterns = () => {
                     cy="50%"
                     labelLine={false}
                     label={({ name, value }) => `${name} ${value}%`}
-                    outerRadius={130}
+                    outerRadius={100}
                     fill="#8884d8"
                     dataKey="value"
                   >

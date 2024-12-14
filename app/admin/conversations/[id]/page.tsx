@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Archive, ArrowLeft, Trash2, RotateCcw } from "lucide-react";
 import { toast } from "react-hot-toast";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   role: string;
@@ -206,7 +207,13 @@ export default function ConversationDetails() {
               <div className="text-sm mb-1">
                 {message.role === "user" ? "User" : "AI Assistant"}
               </div>
-              <div className="text-sm whitespace-pre-wrap">{message.content}</div>
+              {message.role === "ai" ? (
+                <ReactMarkdown className="prose prose-sm max-w-none">
+                  {message.content}
+                </ReactMarkdown>
+              ) : (
+                message.content
+              )}
               <div className="text-xs mt-2 opacity-70">
                 {new Date(message.timestamp).toLocaleString()}
               </div>

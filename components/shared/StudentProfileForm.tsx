@@ -38,7 +38,7 @@ const editingFormSchema = baseFormSchema.extend({
 
 export const STUDY_COUNTRIES = ["United States"] as const;
 
-export const PROGRAM_TYPES = ["Masters", "PhD", "Graduate Certificate", "Diploma"] as const;
+export const PROGRAM_TYPES = ["Masters", "PhD"] as const;
 
 export const NAAC_GRADES = ["A++", "A+", "A", "B++", "B+", "B", "C", "Not Applicable"] as const;
 
@@ -96,8 +96,8 @@ export default function StudentProfileForm({
     naac_grade: user.profile?.naac_grade ?? "",
     program_type: user.profile?.program_type ?? "",
     language_proficiency: {
-      test_type: (user.profile?.language_proficiency as any)?.test_type ?? null,
-      overall_score: (user.profile?.language_proficiency as any)?.overall_score ?? null,
+      test_type: (user.profile?.language_proficiency as any)?.test_type ?? "",
+      overall_score: (user.profile?.language_proficiency as any)?.overall_score ?? "",
     },
     work_experience_years: user.profile?.work_experience_years?.toString() ?? "0",
     technical_skills: user.profile?.technical_skills ?? [],
@@ -109,7 +109,23 @@ export default function StudentProfileForm({
   const validateForm = () => {
     try {
       const schema = mode === "editing" ? editingFormSchema : baseFormSchema;
-      schema.parse(formData);
+
+      // Convert string values to numbers where needed
+      const validationData = {
+        ...formData,
+        gpa: formData.gpa ? parseFloat(formData.gpa) : undefined,
+        percentage: formData.percentage,
+        backlogs: formData.backlogs,
+        work_experience_years: formData.work_experience_years,
+        language_proficiency: {
+          ...formData.language_proficiency,
+          overall_score: formData.language_proficiency.overall_score
+            ? Number(formData.language_proficiency.overall_score)
+            : undefined,
+        },
+      };
+
+      schema.parse(validationData);
       setErrors({});
       return true;
     } catch (error) {
@@ -120,6 +136,7 @@ export default function StudentProfileForm({
           newErrors[path] = err.message;
         });
         setErrors(newErrors);
+        console.error("Validation errors:", newErrors);
       }
       return false;
     }
@@ -305,148 +322,143 @@ export default function StudentProfileForm({
           />
           {errors.percentage && <p className="text-red-500 text-sm mt-1">{errors.percentage}</p>}
         </div>
+      </div>
 
-        <div>
-          <label htmlFor="backlogs" className="block text-sm font-medium text-gray-700">
-            Number of Backlogs
-          </label>
-          <input
-            id="backlogs"
-            type="number"
-            min="0"
-            required
-            value={formData.backlogs}
-            onChange={(e) => setFormData((prev) => ({ ...prev, backlogs: e.target.value }))}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          />
-          {errors.backlogs && <p className="text-red-500 text-sm mt-1">{errors.backlogs}</p>}
-        </div>
+      <div>
+        <label htmlFor="backlogs" className="block text-sm font-medium text-gray-700">
+          Number of Backlogs
+        </label>
+        <input
+          id="backlogs"
+          type="number"
+          min="0"
+          required
+          value={formData.backlogs}
+          onChange={(e) => setFormData((prev) => ({ ...prev, backlogs: e.target.value }))}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+        />
+        {errors.backlogs && <p className="text-red-500 text-sm mt-1">{errors.backlogs}</p>}
+      </div>
 
-        <div>
-          <label htmlFor="naac_grade" className="block text-sm font-medium text-gray-700">
-            NAAC Grade
-          </label>
-          <select
-            id="naac_grade"
-            value={formData.naac_grade}
-            onChange={(e) => setFormData((prev) => ({ ...prev, naac_grade: e.target.value }))}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          >
-            <option value="">Select NAAC grade</option>
-            {NAAC_GRADES.map((grade) => (
-              <option key={grade} value={grade}>
-                {grade}
-              </option>
-            ))}
-          </select>
-          {errors.naac_grade && <p className="text-red-500 text-sm mt-1">{errors.naac_grade}</p>}
-        </div>
+      <div>
+        <label htmlFor="naac_grade" className="block text-sm font-medium text-gray-700">
+          NAAC Grade
+        </label>
+        <select
+          id="naac_grade"
+          value={formData.naac_grade}
+          onChange={(e) => setFormData((prev) => ({ ...prev, naac_grade: e.target.value }))}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+        >
+          <option value="">Select NAAC grade</option>
+          {NAAC_GRADES.map((grade) => (
+            <option key={grade} value={grade}>
+              {grade}
+            </option>
+          ))}
+        </select>
+        {errors.naac_grade && <p className="text-red-500 text-sm mt-1">{errors.naac_grade}</p>}
+      </div>
 
-        <div>
-          <label htmlFor="program_type" className="block text-sm font-medium text-gray-700">
-            Program Type
-          </label>
-          <select
-            id="program_type"
-            required
-            value={formData.program_type}
-            onChange={(e) => setFormData((prev) => ({ ...prev, program_type: e.target.value }))}
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          >
-            <option value="">Select program type</option>
-            {PROGRAM_TYPES.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-          {errors.program_type && (
-            <p className="text-red-500 text-sm mt-1">{errors.program_type}</p>
-          )}
-        </div>
+      <div>
+        <label htmlFor="program_type" className="block text-sm font-medium text-gray-700">
+          Program Type
+        </label>
+        <select
+          id="program_type"
+          required
+          value={formData.program_type}
+          onChange={(e) => setFormData((prev) => ({ ...prev, program_type: e.target.value }))}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+        >
+          <option value="">Select program type</option>
+          {PROGRAM_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {type}
+            </option>
+          ))}
+        </select>
+        {errors.program_type && <p className="text-red-500 text-sm mt-1">{errors.program_type}</p>}
+      </div>
 
-        <div>
-          <label htmlFor="test_type" className="block text-sm font-medium text-gray-700">
-            English Test Type
-          </label>
-          <select
-            id="test_type"
-            required
-            value={formData.language_proficiency.test_type}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                language_proficiency: {
-                  ...prev.language_proficiency,
-                  test_type: e.target.value,
-                },
-              }))
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          >
-            <option value="">Select test type</option>
-            <option value="IELTS">IELTS</option>
-            <option value="TOEFL">TOEFL</option>
-            <option value="PTE">PTE</option>
-          </select>
-          {errors["language_proficiency.test_type"] && (
-            <p className="text-red-500 text-sm mt-1">{errors["language_proficiency.test_type"]}</p>
-          )}
-        </div>
+      <div>
+        <label htmlFor="test_type" className="block text-sm font-medium text-gray-700">
+          English Test Type
+        </label>
+        <select
+          id="test_type"
+          required
+          value={formData.language_proficiency.test_type}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              language_proficiency: {
+                ...prev.language_proficiency,
+                test_type: e.target.value,
+              },
+            }))
+          }
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+        >
+          <option value="">Select test type</option>
+          <option value="IELTS">IELTS</option>
+          <option value="TOEFL">TOEFL</option>
+          <option value="PTE">PTE</option>
+        </select>
+        {errors["language_proficiency.test_type"] && (
+          <p className="text-red-500 text-sm mt-1">{errors["language_proficiency.test_type"]}</p>
+        )}
+      </div>
 
-        <div>
-          <label htmlFor="test_score" className="block text-sm font-medium text-gray-700">
-            Test Score
-          </label>
-          <input
-            id="test_score"
-            type="number"
-            step="0.1"
-            required
-            placeholder="Overall score"
-            value={formData.language_proficiency.overall_score}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                language_proficiency: {
-                  ...prev.language_proficiency,
-                  overall_score: parseFloat(e.target.value),
-                },
-              }))
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          />
-          {errors["language_proficiency.overall_score"] && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors["language_proficiency.overall_score"]}
-            </p>
-          )}
-        </div>
+      <div>
+        <label htmlFor="test_score" className="block text-sm font-medium text-gray-700">
+          Test Score
+        </label>
+        <input
+          id="test_score"
+          type="number"
+          step="0.1"
+          required
+          placeholder="Overall score"
+          value={formData.language_proficiency.overall_score}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              language_proficiency: {
+                ...prev.language_proficiency,
+                overall_score: e.target.value,
+              },
+            }))
+          }
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+        />
+        {errors["language_proficiency.overall_score"] && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors["language_proficiency.overall_score"]}
+          </p>
+        )}
+      </div>
 
-        <div>
-          <label
-            htmlFor="work_experience_years"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Work Experience (years)
-          </label>
-          <input
-            id="work_experience_years"
-            type="number"
-            min="0"
-            value={formData.work_experience_years}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                work_experience_years: e.target.value,
-              }))
-            }
-            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-          />
-          {errors.work_experience_years && (
-            <p className="text-red-500 text-sm mt-1">{errors.work_experience_years}</p>
-          )}
-        </div>
+      <div>
+        <label htmlFor="work_experience_years" className="block text-sm font-medium text-gray-700">
+          Work Experience (years)
+        </label>
+        <input
+          id="work_experience_years"
+          type="number"
+          min="0"
+          value={formData.work_experience_years}
+          onChange={(e) =>
+            setFormData((prev) => ({
+              ...prev,
+              work_experience_years: e.target.value,
+            }))
+          }
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+        />
+        {errors.work_experience_years && (
+          <p className="text-red-500 text-sm mt-1">{errors.work_experience_years}</p>
+        )}
       </div>
 
       <div>

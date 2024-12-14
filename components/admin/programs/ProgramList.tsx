@@ -38,12 +38,10 @@ const DeleteAlert = ({
 
           <div className="p-6">
             <div className="text-center">
-              <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">
-                Delete Program
-              </h3>
+              <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Delete Program</h3>
               <p className="text-sm text-gray-500">
-                Are you sure you want to delete "{program?.program_name}"? This
-                action cannot be undone.
+                Are you sure you want to delete "{program?.program_name}"? This action cannot be
+                undone.
               </p>
             </div>
           </div>
@@ -92,8 +90,7 @@ const ProgramList = ({
 }) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedProgram, setSelectedProgram] =
-    useState<ProgramsGloveraFinal | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<ProgramsGloveraFinal | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
 
@@ -111,26 +108,24 @@ const ProgramList = ({
     if (!selectedProgram) return;
 
     setIsDeleting(true);
-    const toastId = toast.loading("Deleting program...");
 
     try {
-      const response = await fetch(
-        `${getBasePath()}/api/programs?id=${selectedProgram.id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`${getBasePath()}/api/programs?id=${selectedProgram.id}`, {
+        method: "DELETE",
+      });
 
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || "Failed to delete program");
       }
 
+      toast.success("Program deleted successfully");
+
       setPrograms((prev) => prev.filter((p) => p.id !== selectedProgram.id));
       router.refresh();
     } catch (error) {
       console.error("Error deleting program:", error);
-      toast.error("Failed to delete program", { id: toastId });
+      toast.error("Failed to delete program");
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);
@@ -157,21 +152,13 @@ const ProgramList = ({
                 <th className="text-left py-4 px-6 font-medium text-gray-500">
                   Program & University
                 </th>
-                <th className="text-left py-4 px-6 font-medium text-gray-500">
-                  Details
-                </th>
+                <th className="text-left py-4 px-6 font-medium text-gray-500">Details</th>
                 <th className="text-left py-4 px-6 font-medium text-gray-500">
                   Pricing & Duration
                 </th>
-                <th className="text-left py-4 px-6 font-medium text-gray-500">
-                  Requirements
-                </th>
-                <th className="text-left py-4 px-6 font-medium text-gray-500">
-                  Status
-                </th>
-                <th className="text-right py-4 px-6 font-medium text-gray-500">
-                  Actions
-                </th>
+                <th className="text-left py-4 px-6 font-medium text-gray-500">Requirements</th>
+                <th className="text-left py-4 px-6 font-medium text-gray-500">Status</th>
+                <th className="text-right py-4 px-6 font-medium text-gray-500">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -180,9 +167,7 @@ const ProgramList = ({
                   <td colSpan={6} className="py-8">
                     <div className="flex justify-center items-center">
                       <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-                      <span className="ml-2 text-gray-500">
-                        Loading programs...
-                      </span>
+                      <span className="ml-2 text-gray-500">Loading programs...</span>
                     </div>
                   </td>
                 </tr>
@@ -194,22 +179,15 @@ const ProgramList = ({
                 </tr>
               ) : (
                 programs.map((program) => (
-                  <tr
-                    key={program.id}
-                    className="hover:bg-gray-50/50 transition-colors"
-                  >
+                  <tr key={program.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">
-                          {program.program_name}
-                        </span>
+                        <span className="font-medium text-gray-900">{program.program_name}</span>
                         <span className="text-sm text-gray-500 flex items-center mt-1">
                           <GraduationCap className="w-4 h-4 mr-1" />
                           {program.university}
                         </span>
-                        <span className="text-xs text-gray-500 mt-1">
-                          {program.college}
-                        </span>
+                        <span className="text-xs text-gray-500 mt-1">{program.college}</span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
@@ -243,24 +221,21 @@ const ProgramList = ({
                           Save {program.savings_percent}%
                         </span>
                         <span className="text-sm text-gray-500 mt-1">
-                          {program.can_finish_in} • {program.total_credits}{" "}
-                          credits
+                          {program.can_finish_in} • {program.total_credits} credits
                         </span>
                       </div>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex flex-col text-sm">
                         <span className="text-gray-600">
-                          Min GPA: {program.min_gpa || "N/A"} (
-                          {program.gpa_type || "Not specified"})
+                          Min GPA: {program.min_gpa || "N/A"} ({program.gpa_type || "Not specified"}
+                          )
                         </span>
                         <span className="text-gray-600">
                           Work Exp: {program.min_work_exp || 0}+ years
                         </span>
                         {program.backlog !== null && (
-                          <span className="text-gray-600">
-                            Max Backlogs: {program.backlog}
-                          </span>
+                          <span className="text-gray-600">Max Backlogs: {program.backlog}</span>
                         )}
                       </div>
                     </td>

@@ -102,20 +102,6 @@ export default function ProfileForm({ user }: { user: User }) {
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Technical Skills</h2>
-          <div className="flex flex-wrap gap-2">
-            {user.profile?.technical_skills?.map((skill) => (
-              <span
-                key={skill}
-                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Study Preferences</h2>
           <div className="space-y-4">
             <div>

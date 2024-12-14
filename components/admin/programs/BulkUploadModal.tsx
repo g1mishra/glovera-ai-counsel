@@ -13,19 +13,48 @@ type EnglishRequirements = {
 };
 
 type Program = {
-  course_name: string;
-  degree_type: string;
-  tuition_fee: number;
-  duration: string;
-  university_name: string;
-  university_location: string;
-  global_rank?: string | null;
-  program_url?: string | null;
-  start_date: string;
-  apply_date: string;
-  english_requirments: EnglishRequirements | null;
-  min_gpa?: number | null;
-  work_experience?: number | null;
+  ranking: number;
+  university: string;
+  college: string;
+  program_name: string;
+  location: string;
+  glovera_pricing: number;
+  original_pricing: number;
+  savings_percent: number;
+  public_private: string;
+  key_job_roles: string;
+  iit_or_iim: string;
+  location_specialty?: string;
+  uni_or_college_specialty?: string;
+  possible_specializations_or_concentrations?: string;
+  program_top_usp?: string;
+  curriculum?: string;
+  co_op_internship?: string;
+  savings: number;
+  total_credits: string;
+  credits_in_iit_or_iim: string;
+  credits_in_us: string;
+  can_finish_in: string;
+  ug_background?: string;
+  minimum_qualifications?: string;
+  design_factor?: string;
+  transcript_evaluation?: string;
+  LOR?: string;
+  SOP?: string;
+  interviews?: string;
+  application_fee?: string;
+  deposit?: number;
+  deposit_refundable_if_visa_cancelled?: string;
+  co_op?: string;
+  key_companies_hiring?: any;
+  quant_or_qualitative: string;
+  min_gpa?: number;
+  gpa_type?: string;
+  type_of_program?: string;
+  percentage?: number;
+  backlog?: number;
+  min_work_exp?: number;
+  three_year_eleg?: string;
 };
 
 export type BulkUploadModalProps = {
@@ -49,8 +78,7 @@ export const BulkUploadModal = ({
 
     const droppedFile = e.dataTransfer.files[0];
     if (
-      droppedFile?.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      droppedFile?.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
       droppedFile?.type === "text/csv"
     ) {
       setFile(droppedFile);
@@ -78,23 +106,28 @@ export const BulkUploadModal = ({
     return isNaN(parsed) ? null : parsed;
   };
 
-  const validateRow = (
-    row: any,
-    headers: string[],
-    rowIndex: number
-  ): string[] => {
+  const validateRow = (row: any, headers: string[], rowIndex: number): string[] => {
     const errors: string[] = [];
 
     // Required fields
     const requiredFields = [
-      "course_name",
-      "degree_type",
-      "tuition_fee",
-      "duration",
-      "university_name",
-      "university_location",
-      "start_date",
-      "apply_date",
+      "ranking",
+      "university",
+      "college",
+      "program_name",
+      "location",
+      "glovera_pricing",
+      "original_pricing",
+      "savings_percent",
+      "public_private",
+      "key_job_roles",
+      "iit_or_iim",
+      "total_credits",
+      "credits_in_iit_or_iim",
+      "credits_in_us",
+      "can_finish_in",
+      "savings",
+      "quant_or_qualitative",
     ];
 
     requiredFields.forEach((field) => {
@@ -104,17 +137,20 @@ export const BulkUploadModal = ({
       }
     });
 
-    // Validate tuition fee
-    const tuitionIndex = headers.indexOf("tuition_fee");
-    if (tuitionIndex !== -1) {
-      const fee = parseNumber(row[tuitionIndex]);
-      if (fee === null || fee <= 0) {
-        errors.push("tuition_fee must be a positive number");
+    // Validate numeric fields
+    ["glovera_pricing", "original_pricing", "savings", "ranking"].forEach((field) => {
+      const index = headers.indexOf(field);
+      if (index !== -1) {
+        const value = parseNumber(row[index]);
+        if (value === null || value < 0) {
+          errors.push(`${field} must be a positive number`);
+        }
       }
-    }
+    });
 
     return errors;
   };
+
   const parseExcelFile = async (file: File): Promise<Program[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -129,7 +165,7 @@ export const BulkUploadModal = ({
           // Convert sheet to JSON with raw: true to get proper date values
           const jsonData = XLSX.utils.sheet_to_json(sheet, { raw: true });
 
-          const transformedData: Program[] = jsonData.map((row: any) => {
+          const transformedData: any[] = jsonData.map((row: any) => {
             // Parse english requirements from JSON string
             let englishReq = {
               ielts: 0,
@@ -154,9 +190,7 @@ export const BulkUploadModal = ({
                     toefl: row.english_requirments.toefl
                       ? Number(row.english_requirments.toefl)
                       : 0,
-                    pte: row.english_requirments.pte
-                      ? Number(row.english_requirments.pte)
-                      : 0,
+                    pte: row.english_requirments.pte ? Number(row.english_requirments.pte) : 0,
                   };
                 }
               }
@@ -189,25 +223,61 @@ export const BulkUploadModal = ({
 
             // Remove unnecessary fields and transform the data
             return {
-              course_name: String(row.course_name || "").trim(),
-              degree_type: String(row.degree_type || "").trim(),
-              tuition_fee: Number(row.tuition_fee),
-              duration: String(row.duration || "").trim(),
-              university_name: String(row.university_name || "").trim(),
-              university_location: String(row.university_location || "").trim(),
-              start_date: formatDate(row.start_date),
-              apply_date: formatDate(row.apply_date),
-              english_requirments: englishReq,
+              ranking: Number(row.ranking),
+              university: String(row.university || "").trim(),
+              college: String(row.college || "").trim(),
+              program_name: String(row.program_name || "").trim(),
+              location: String(row.location || "").trim(),
+              glovera_pricing: Number(row.glovera_pricing),
+              original_pricing: Number(row.original_pricing),
+              savings_percent: Number(row.savings_percent),
+              public_private: String(row.public_private || "").trim(),
+              key_job_roles: String(row.key_job_roles || "").trim(),
+              iit_or_iim: String(row.iit_or_iim || "").trim(),
+              location_specialty: row.location_specialty
+                ? String(row.location_specialty).trim()
+                : "",
+              uni_or_college_specialty: row.uni_or_college_specialty
+                ? String(row.uni_or_college_specialty).trim()
+                : "",
+              possible_specializations_or_concentrations:
+                row.possible_specializations_or_concentrations
+                  ? String(row.possible_specializations_or_concentrations).trim()
+                  : "",
+              program_top_usp: row.program_top_usp ? String(row.program_top_usp).trim() : "",
+              curriculum: row.curriculum ? String(row.curriculum).trim() : "",
+              co_op_internship: row.co_op_internship ? String(row.co_op_internship).trim() : "",
+              savings: Number(row.savings),
+              total_credits: String(row.total_credits || "").trim(),
+              credits_in_iit_or_iim: String(row.credits_in_iit_or_iim || "").trim(),
+              credits_in_us: String(row.credits_in_us || "").trim(),
+              can_finish_in: String(row.can_finish_in || "").trim(),
+              ug_background: row.ug_background ? String(row.ug_background).trim() : "",
+              minimum_qualifications: row.minimum_qualifications
+                ? String(row.minimum_qualifications).trim()
+                : "",
+              design_factor: row.design_factor ? String(row.design_factor).trim() : "",
+              transcript_evaluation: row.transcript_evaluation
+                ? String(row.transcript_evaluation).trim()
+                : "",
+              LOR: row.LOR ? String(row.LOR).trim() : "",
+              SOP: row.SOP ? String(row.SOP).trim() : "",
+              interviews: row.interviews ? String(row.interviews).trim() : "",
+              application_fee: row.application_fee ? String(row.application_fee).trim() : "",
+              deposit: row.deposit ? Number(row.deposit) : 0,
+              deposit_refundable_if_visa_cancelled: row.deposit_refundable_if_visa_cancelled
+                ? String(row.deposit_refundable_if_visa_cancelled).trim()
+                : "",
+              co_op: row.co_op ? String(row.co_op).trim() : "",
+              key_companies_hiring: row.key_companies_hiring ? row.key_companies_hiring : "",
+              quant_or_qualitative: String(row.quant_or_qualitative || "").trim(),
               min_gpa: row.min_gpa ? Number(row.min_gpa) : null,
-              work_experience: row.work_experience
-                ? Number(row.work_experience)
-                : 0,
-              global_rank: row.global_rank
-                ? String(Number(row.global_rank) * 100).replace(/[^0-9.]/g, "")
-                : null,
-              program_url: row.program_url
-                ? String(row.program_url).trim()
-                : null,
+              gpa_type: row.gpa_type ? String(row.gpa_type).trim() : "",
+              type_of_program: row.type_of_program ? String(row.type_of_program).trim() : "",
+              percentage: row.percentage ? Number(row.percentage) : null,
+              backlog: row.backlog ? Number(row.backlog) : null,
+              min_work_exp: row.min_work_exp ? Number(row.min_work_exp) : null,
+              three_year_eleg: row.three_year_eleg ? String(row.three_year_eleg).trim() : "",
             };
           });
 
@@ -223,25 +293,30 @@ export const BulkUploadModal = ({
     });
   };
 
-  // Also update the template data to match the expected format
   const handleDownloadTemplate = () => {
     const template = [
       {
-        course_name: "Master of Business Analytics",
-        degree_type: "M.Sc. / Full-time / On Campus",
-        tuition_fee: 25000,
-        duration: "2 years",
-        university_name: "Example University",
-        university_location: "London, UK",
-        global_rank: "50",
-        program_url: "https://example.com/program",
-        start_date: "09/01/2024",
-        apply_date: "03/01/2024",
-        ielts: 6.5,
-        toefl: 90,
-        pte: 60,
+        ranking: 1,
+        university: "Example University",
+        college: "Example College",
+        program_name: "Master of Business Analytics",
+        location: "New York, USA",
+        glovera_pricing: 25000,
+        original_pricing: 30000,
+        savings_percent: 16.67,
+        public_private: "Private",
+        key_job_roles: "Data Analyst, Business Analyst",
+        iit_or_iim: "IIT",
+        total_credits: "36",
+        credits_in_iit_or_iim: "18",
+        credits_in_us: "18",
+        can_finish_in: "18 months",
+        savings: 5000,
+        quant_or_qualitative: "Quant",
         min_gpa: 3.0,
-        work_experience: 2,
+        percentage: 60,
+        backlog: 0,
+        min_work_exp: 2,
       },
     ];
 
@@ -250,21 +325,27 @@ export const BulkUploadModal = ({
 
     // Set column widths for better visibility
     ws["!cols"] = [
-      { wch: 30 }, // course_name
-      { wch: 25 }, // degree_type
-      { wch: 12 }, // tuition_fee
-      { wch: 10 }, // duration
-      { wch: 25 }, // university_name
-      { wch: 25 }, // university_location
-      { wch: 12 }, // global_rank
-      { wch: 40 }, // program_url
-      { wch: 12 }, // start_date
-      { wch: 12 }, // apply_date
-      { wch: 8 }, // ielts
-      { wch: 8 }, // toefl
-      { wch: 8 }, // pte
-      { wch: 8 }, // min_gpa
-      { wch: 15 }, // work_experience
+      { wch: 8 }, // ranking
+      { wch: 25 }, // university
+      { wch: 25 }, // college
+      { wch: 30 }, // program_name
+      { wch: 20 }, // location
+      { wch: 15 }, // glovera_pricing
+      { wch: 15 }, // original_pricing
+      { wch: 15 }, // savings_percent
+      { wch: 15 }, // public_private
+      { wch: 30 }, // key_job_roles
+      { wch: 10 }, // iit_or_iim
+      { wch: 15 }, // total_credits
+      { wch: 20 }, // credits_in_iit_or_iim
+      { wch: 15 }, // credits_in_us
+      { wch: 15 }, // can_finish_in
+      { wch: 10 }, // savings
+      { wch: 20 }, // quant_or_qualitative
+      { wch: 10 }, // min_gpa
+      { wch: 10 }, // percentage
+      { wch: 10 }, // backlog
+      { wch: 15 }, // min_work_exp
     ];
 
     XLSX.utils.book_append_sheet(wb, ws, "Template");
@@ -305,9 +386,7 @@ export const BulkUploadModal = ({
               (err: any) =>
                 `Row ${err.row}: ${
                   Array.isArray(err.error)
-                    ? err.error
-                        .map((e: any) => `${e.path}: ${e.message}`)
-                        .join(", ")
+                    ? err.error.map((e: any) => `${e.path}: ${e.message}`).join(", ")
                     : err.error
                 }`
             )
@@ -374,22 +453,16 @@ export const BulkUploadModal = ({
               onChange={handleFileChange}
               id="file-upload"
             />
-            <label
-              htmlFor="file-upload"
-              className="btn-secondary inline-block cursor-pointer"
-            >
+            <label htmlFor="file-upload" className="btn-secondary inline-block cursor-pointer">
               Browse Files
             </label>
           </div>
         </div>
 
         <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">
-            Need a template?
-          </h4>
+          <h4 className="text-sm font-medium text-gray-900 mb-2">Need a template?</h4>
           <p className="text-sm text-gray-600 mb-3">
-            Download our Excel template to ensure your data is formatted
-            correctly.
+            Download our Excel template to ensure your data is formatted correctly.
           </p>
           <button
             className="btn-secondary flex items-center gap-2"
@@ -401,11 +474,7 @@ export const BulkUploadModal = ({
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <button
-            onClick={onCloseBulkModal}
-            className="btn-secondary"
-            disabled={isUploading}
-          >
+          <button onClick={onCloseBulkModal} className="btn-secondary" disabled={isUploading}>
             Cancel
           </button>
           <button

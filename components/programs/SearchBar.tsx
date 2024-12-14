@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Search, Filter } from "lucide-react";
 import { ProgramFilterParams } from "@/types";
+import { Filter, Search } from "lucide-react";
+import React, { useCallback, useEffect, useState } from "react";
 
 interface FilterOptions {
   degree_types: string[];
@@ -44,6 +44,23 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onFilter, initialFilter
     fetchFilterOptions();
   }, []);
 
+  const debouncedSearch = useCallback(
+    (() => {
+      let timeoutId: NodeJS.Timeout;
+      return (value: string) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => onSearch(value), 300);
+      };
+    })(),
+    [onSearch]
+  );
+
+  const handleQueryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setQuery(value);
+    debouncedSearch(value);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(query);
@@ -63,7 +80,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onFilter, initialFilter
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={handleQueryChange}
             placeholder="Search programs..."
             className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:border-[#FF4B26]"
           />
