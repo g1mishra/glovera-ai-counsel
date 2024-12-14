@@ -104,7 +104,7 @@ export async function importPrograms(filePath: string) {
           // );
 
           console.log(`Successfully imported ${programs.length} programs!`);
-          console.log(programs[0]);
+          // console.log(programs[0]);
           resolve();
         } catch (error: any) {
           console.error("API upload error:", error.message);

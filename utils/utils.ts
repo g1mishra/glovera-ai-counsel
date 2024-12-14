@@ -51,17 +51,19 @@ export const stripMarkdown = (markdown: string) => {
       if (!line) return "";
 
       // Add some natural language transitions
-      if (line.startsWith("Program")) return `The academic program ${line.toLowerCase()}`;
-      if (line.startsWith("Location")) return `Located in ${line.replace("Location", "").trim()}`;
-      if (line.startsWith("Cost")) return `with a cost of ${line.replace("Cost", "").trim()}`;
-      if (line.startsWith("Ranking"))
-        return `and has a national ranking of ${line.replace("Ranking", "").trim()}`;
-      if (line.startsWith("Key Roles"))
-        return `Graduates can pursue careers such as ${line.replace("Key Roles", "").trim()}`;
-      if (line.startsWith("Specializations"))
-        return `with specializations in ${line.replace("Specializations", "").trim()}`;
-      if (line.startsWith("Duration"))
-        return `and can be completed in ${line.replace("Duration", "").trim()}`;
+      // if (line.startsWith("Program")) return `The academic program ${line.toLowerCase()}`;
+      // if (line.startsWith("Location")) return `Located in ${line.replace("Location", "").trim()}`;
+      // if (line.startsWith("Cost")) return `with a cost of ${line.replace("Cost", "").trim()}`;
+      // if (line.startsWith("Ranking"))
+      //   return `and has a national ranking of ${line.replace("Ranking", "").trim()}`;
+      // if (line.startsWith("Key Roles"))
+      //   return `Graduates can pursue careers such as ${line.replace("Key Roles", "").trim()}`;
+      // if (line.startsWith("Specializations"))
+      //   return `with specializations in ${line.replace("Specializations", "").trim()}`;
+      // if (line.startsWith("Duration")) {
+
+      //   return `and can be completed in ${line.replace("Duration", "").trim()}`;
+      // }
 
       return line;
     })

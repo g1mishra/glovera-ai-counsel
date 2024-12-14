@@ -13,7 +13,7 @@ const ProgramsAdminView = ({ programs: initialPrograms, pagination }: ProgramsMa
   const [error, setError] = useState("");
 
   useEffect(() => {
-    console.log("initialPrograms", initialPrograms);
+    // console.log("initialPrograms", initialPrograms);
     setPrograms(initialPrograms);
   }, [initialPrograms]);
 

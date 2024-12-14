@@ -153,7 +153,6 @@ export async function PUT(request: NextRequest) {
     Object.keys(data).forEach((key) => data[key] === undefined && delete data[key]);
 
     delete data.id;
-    console.log("data", data);
     // Update program
     const updatedProgram = await prisma.programsGloveraFinal.update({
       where: { id },

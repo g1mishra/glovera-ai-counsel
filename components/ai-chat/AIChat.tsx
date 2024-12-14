@@ -130,6 +130,8 @@ export default function AIChat() {
 
   const startRecording = async () => {
     try {
+      await handleInterrupt();
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream);
 
@@ -183,6 +185,7 @@ export default function AIChat() {
             console.error("Speech processing error:", error);
             toast.error("Failed to process speech");
           } finally {
+            setIsLoading(false);
             setVoiceStatus(isVoiceChatActive ? "Waiting for you to speak..." : "");
           }
         }
@@ -198,7 +201,7 @@ export default function AIChat() {
     }
   };
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
     if (mediaRecorderRef.current?.state === "recording") {
       mediaRecorderRef.current.stop();
       mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
@@ -219,6 +222,7 @@ export default function AIChat() {
     if (!avatarRef.current || !text) return;
 
     try {
+      setIsLoading(false);
       setIsSpeaking(true);
       await avatarRef.current.speak({
         text,
@@ -283,6 +287,7 @@ export default function AIChat() {
     if (pendingMessageRef.current || !inputMessage.trim() || !conversationId) return;
     pendingMessageRef.current = true;
 
+    await handleInterrupt();
     const userMessage = inputMessage.trim();
     setInputMessage("");
     setMessages((prev) => [...prev, { type: "user", content: userMessage }]);
@@ -329,15 +334,17 @@ export default function AIChat() {
     }
   }, [inputMessage, conversationId]);
 
-  const startNewConversation = async () => {
-    // sessionStorage.clear();
-    setMessages([]);
-    setConversationId(null);
-    setInputMessage("");
+  async function handleInterrupt() {
+    if (!avatarRef.current) {
+      toast.error("Avatar not initialized");
 
-    await avatarRef.current?.stopAvatar();
-    await initializeAvatar();
-  };
+      return;
+    }
+
+    await avatarRef.current.interrupt().catch((e) => {
+      console.error(e);
+    });
+  }
 
   useEffect(() => {
     if (selectedAvatar) {
@@ -412,18 +419,6 @@ export default function AIChat() {
             <span className="text-lg">{selectedAvatar.flag}</span>
             <span className="font-medium">{selectedAvatar.name}</span>
           </div>
-          <div className="flex max-sm:flex-col justify-center gap-4 mt-4">
-            {messages.length > 0 && (
-              <button
-                onClick={startNewConversation}
-                disabled={!isAvatarReady || isLoading}
-                className="flex items-center px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors max-sm:mb-0 disabled:opacity-50 disabled:hover:bg-white"
-              >
-                <PlusCircle className="w-5 h-5 mr-2" />
-                New Session
-              </button>
-            )}
-          </div>
         </div>
       </div>
       <div className="lg:col-span-3 bg-white rounded-xl border border-gray-100 shadow p-6 min-h-[500px] max-h-[70vh] overflow-y-auto flex flex-col">
@@ -439,7 +434,10 @@ export default function AIChat() {
             {messages.map((message, index) => {
               if (!message.content.trim()) return null;
               const isLastAiMessage =
-                message.content === Bye_Schedule_Message && message.type === "ai";
+                message.type === "ai" && index === messages.findLastIndex((m) => m.type === "ai");
+
+              if (!message.content.trim()) return null;
+
               return (
                 <div
                   key={index}
@@ -459,7 +457,7 @@ export default function AIChat() {
                     ) : (
                       message.content
                     )}
-                    {isLastAiMessage && conversationId && (
+                    {isLastAiMessage && messages.length > 3 && conversationId && (
                       <MessageButtons conversationId={conversationId} />
                     )}
                   </div>

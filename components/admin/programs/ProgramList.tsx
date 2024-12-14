@@ -136,7 +136,7 @@ const ProgramList = ({
   const handleModalClose = (shouldRefetch?: boolean) => {
     setIsEditModalOpen(false);
     setSelectedProgram(null);
-    console.log("shouldRefetch", shouldRefetch);
+    // console.log("shouldRefetch", shouldRefetch);
     if (shouldRefetch) {
       router.refresh();
     }

@@ -48,7 +48,7 @@ export default async function ProgramDetailPage(props: Props) {
   const params = await props.params;
   const program = await fetchProgramDetails(params?.programId);
 
-  console.log(JSON.stringify(program, null, 2));
+  // console.log(JSON.stringify(program, null, 2));
 
   return (
     <div className="min-h-screen bg-white">

@@ -145,7 +145,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Create programs
-    console.log("Importing programs:", transformedPrograms);
+    // console.log("Importing programs:", transformedPrograms);
     const created = await Promise.all(
       transformedPrograms.map((program) => prisma.programsGloveraFinal.create({ data: program }))
     );
