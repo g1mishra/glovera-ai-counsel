@@ -36,16 +36,13 @@ const editingFormSchema = baseFormSchema.extend({
   name: z.string().min(1, "Name is required"),
 });
 
-export const STUDY_COUNTRIES = ["United States", "United Kingdom", "Canada"] as const;
+export const STUDY_COUNTRIES = ["United States"] as const;
 
 export const PROGRAM_TYPES = ["Masters", "PhD", "Graduate Certificate", "Diploma"] as const;
 
 export const NAAC_GRADES = ["A++", "A+", "A", "B++", "B+", "B", "C", "Not Applicable"] as const;
 
 export const INTAKE_OPTIONS = [
-  { value: "Fall 2024", label: "Fall 2024 (September 2024)" },
-  { value: "Spring 2025", label: "Spring 2025 (January 2025)" },
-  { value: "Fall 2025", label: "Fall 2025 (September 2025)" },
   { value: "Spring 2026", label: "Spring 2026 (January 2026)" },
 ] as const;
 
@@ -276,14 +273,14 @@ export default function StudentProfileForm({
 
         <div>
           <label htmlFor="gpa" className="block text-sm font-medium text-gray-700">
-            GPA (out of 4.0)
+            GPA (out of 10, Indian system)
           </label>
           <input
             id="gpa"
             type="number"
-            step="0.01"
+            step="0.1"
             min="0"
-            max="4"
+            max="10"
             value={formData.gpa}
             onChange={(e) => setFormData((prev) => ({ ...prev, gpa: e.target.value }))}
             className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
