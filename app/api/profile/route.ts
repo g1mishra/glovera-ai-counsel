@@ -2,12 +2,11 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
 import { authOptions } from "../auth/authOptions";
-import { Prisma } from "@prisma/client";
 
 const ProfileSchema = z.object({
   undergraduate_degree: z.string().min(1, "Degree is required"),
   university: z.string().min(1, "University is required"),
-  gpa: z.number().min(0).max(4).nullable(),
+  gpa: z.number().min(0).max(10).nullable(),
   percentage: z.number().min(0).max(100).nullable(),
   backlogs: z.number().min(0),
   naac_grade: z.string().nullable(),
