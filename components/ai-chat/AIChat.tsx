@@ -265,15 +265,20 @@ export default function AIChat() {
       if (data.success) {
         const newConversationId = data.data.conversation_id;
         setConversationId(newConversationId);
+        let initMsg = "";
         // sessionStorage.setItem("counseling-session-id", newConversationId);
+        if (selectedAvatar && data?.data?.initial_message) {
+          initMsg = data?.data?.initial_message?.replace("an AI consultant", `${selectedAvatar.name}!`);
+        }
+
         setMessages([
           {
             type: "ai",
-            content: data.data.initial_message,
+            content: initMsg,
           },
         ]);
 
-        await speakText(data.data.initial_message);
+        await speakText(initMsg);
       } else {
         toast.error("Failed to start conversation");
       }
