@@ -16,12 +16,28 @@ import MessageButtons from "./MessageButtons";
 import { useRouter } from "next/navigation";
 import { LoadingScreen } from "./LoadingScreen";
 import { Loader2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   type: "user" | "ai";
   content: string;
   showSchedule?: boolean;
 }
+
+const stripMarkdown = (markdown: string) => {
+  // Remove headers
+  let text = markdown.replace(/#{1,6}\s/g, "");
+  // Remove bold/italic
+  text = text.replace(/[*_]{1,3}(.*?)[*_]{1,3}/g, "$1");
+  // Remove links
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1");
+  // Remove code blocks
+  text = text.replace(/```[\s\S]*?```/g, "");
+  text = text.replace(/`([^`]+)`/g, "$1");
+  // Remove lists
+  text = text.replace(/^[\s]*[-+*][\s]+/gm, "");
+  return text.trim();
+};
 
 export default function AIChat() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -159,6 +175,9 @@ export default function AIChat() {
 
             const data = await response.json();
             if (data.success) {
+              const bye_msg =
+                data?.data?.ai_response?.trim() === "bye_bye_message_dont_show_to_user";
+
               setMessages((prev) => [
                 ...prev,
                 {
@@ -167,10 +186,12 @@ export default function AIChat() {
                 },
                 {
                   type: "ai",
-                  content: data.data.ai_response,
+                  content: bye_msg ? "" : data.data.ai_response,
                 },
               ]);
-              await speakText(data.data.ai_response);
+              if (!bye_msg) {
+                await speakText(stripMarkdown(data.data.ai_response));
+              }
             }
           } catch (error) {
             console.error("Speech processing error:", error);
@@ -289,15 +310,19 @@ export default function AIChat() {
       const data = await response.json();
 
       if (data.success) {
+        const bye_msg = data?.data?.ai_response?.trim() === "bye_bye_message_dont_show_to_user";
+
         setMessages((prev) => [
           ...prev,
           {
             type: "ai",
-            content: data.data.ai_response,
+            content: bye_msg ? " " : data.data.ai_response,
           },
         ]);
 
-        await speakText(data.data.ai_response);
+        if (!bye_msg) {
+          await speakText(stripMarkdown(data.data.ai_response));
+        }
       } else {
         toast.error("Failed to get response");
       }
@@ -421,6 +446,7 @@ export default function AIChat() {
               const isLastAiMessage =
                 message.type === "ai" && index === messages.findLastIndex((m) => m.type === "ai");
 
+              if (!isLastAiMessage && !message.content.trim()) return null;
               return (
                 <div
                   key={index}
@@ -433,7 +459,13 @@ export default function AIChat() {
                         : "bg-gray-50 text-gray-800 shadow-sm border border-gray-200"
                     }`}
                   >
-                    {message.content}
+                    {message.type === "ai" ? (
+                      <ReactMarkdown className="prose prose-sm max-w-none">
+                        {message.content}
+                      </ReactMarkdown>
+                    ) : (
+                      message.content
+                    )}
                     {isLastAiMessage && messages.length > 2 && conversationId && (
                       <MessageButtons conversationId={conversationId} />
                     )}

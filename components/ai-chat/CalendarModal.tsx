@@ -74,7 +74,7 @@ const CalIntegration: React.FC<CalIntegrationProps> = ({
           layout: "month_view",
           name: name,
           email: email,
-          conversation_details: `${window.location.origin}/admin/conversations/${conversationId}`,
+          conversation_url: `${window.location.origin}/admin/conversations/${conversationId}`,
         })}
         style={{ display: "none" }}
       >
