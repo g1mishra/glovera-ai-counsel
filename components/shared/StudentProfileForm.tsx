@@ -113,7 +113,7 @@ export default function StudentProfileForm({
       // Convert string values to numbers where needed
       const validationData = {
         ...formData,
-        gpa: formData.gpa ? parseFloat(formData.gpa) : undefined,
+        gpa: formData.gpa ? formData.gpa : undefined,
         percentage: formData.percentage,
         backlogs: formData.backlogs,
         work_experience_years: formData.work_experience_years,
